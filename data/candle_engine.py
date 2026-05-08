@@ -10,7 +10,12 @@ class CandleEngine:
 
         self.history = defaultdict(list)
 
-    def update_tick(self, symbol, price):
+    def update_tick(
+    self,
+    symbol,
+    price,
+    volume
+):
 
         now = datetime.now()
 
@@ -27,7 +32,8 @@ class CandleEngine:
                 "open": price,
                 "high": price,
                 "low": price,
-                "close": price
+                "close": price,
+                "volume": volume
             }
 
             return None
@@ -48,6 +54,7 @@ class CandleEngine:
             )
 
             candle["close"] = price
+            candle["volume"] += volume
 
             return None
 
@@ -64,7 +71,8 @@ class CandleEngine:
             "open": price,
             "high": price,
             "low": price,
-            "close": price
+            "close": price,
+            "volume": volume
         }
 
         return completed

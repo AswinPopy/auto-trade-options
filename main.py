@@ -136,6 +136,8 @@ def on_ticks(ws, ticks):
             "last_price"
         ]
 
+        volume = tick['last_traded_quantity']
+        print("volume", volume)
         symbol = get_symbol(token)
 
         if symbol is None:
@@ -152,7 +154,8 @@ def on_ticks(ws, ticks):
             completed = (
                 candle_engine.update_tick(
                     symbol,
-                    price
+                    price,
+                    volume
                 )
             )
 
@@ -196,7 +199,14 @@ def on_ticks(ws, ticks):
                             broker.capital,
                             ce_price
                         )
+                      
+                        if broker.positions:
 
+                            print(
+                                "⛔ Existing Position Open"
+                            )
+
+                            return
                         broker.buy(
                             ce_symbol,
                             ce_price,
@@ -225,6 +235,13 @@ def on_ticks(ws, ticks):
                             pe_price
                         )
 
+                        if broker.positions:
+
+                            print(
+                                "⛔ Existing Position Open"
+                            )
+
+                            return
                         broker.buy(
                             pe_symbol,
                             pe_price,
