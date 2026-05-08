@@ -16,7 +16,7 @@ def get_ce_symbol(price):
 def get_pe_symbol(price):
 
     strike = get_atm_strike(price)
-
+    strike += 10
     return (
         f"HDFCBANK26MAY"
         f"{strike}PE"

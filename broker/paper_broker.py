@@ -1,6 +1,7 @@
 from utils.trade_logger import (
     TradeLogger
 )
+from datetime import datetime
 class PaperBroker:
 
     def __init__(self, capital):
@@ -19,7 +20,16 @@ class PaperBroker:
     # BUY
     # =========================
     def buy(self, symbol, price, qty):
+        now = datetime.now()
 
+        current_min = (
+            now.hour * 60
+            + now.minute
+        )
+        # Do not buy after 02.30 PM
+        if current_min > (14*00 + 30):
+            return
+        
         # already exists
         if symbol in self.positions:
             return
