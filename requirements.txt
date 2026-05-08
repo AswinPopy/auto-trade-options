@@ -1,0 +1,5 @@
+kiteconnect
+python-dotenv
+websocket-client
+twisted
+autobahn
