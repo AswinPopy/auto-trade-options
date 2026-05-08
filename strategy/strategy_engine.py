@@ -3,10 +3,6 @@ from strategy.patterns import (
     bearish_engulfing
 )
 
-from strategy.market_filter import (
-    is_sideways
-)
-
 
 class StrategyEngine:
 
@@ -14,35 +10,96 @@ class StrategyEngine:
 
         self.reader = candle_reader
 
-    def generate_signal(self, symbol):
+    # =====================================
+    # SIDEWAYS FILTER
+    # =====================================
+    def is_sideways(self, symbol):
 
-        candles = self.reader.get_recent_candles(
+        candles = self.reader.get_last(
             symbol,
             5
         )
 
+        # need enough candles
         if len(candles) < 5:
-            return "HOLD"
+            return True
 
-        # --------------------------------
-        # SIDEWAYS FILTER
-        # --------------------------------
-        if is_sideways(candles):
+        highest = max(
+            c["high"]
+            for c in candles
+        )
 
-            print("⚠️ SIDEWAYS MARKET")
+        lowest = min(
+            c["low"]
+            for c in candles
+        )
 
-            return "HOLD"
+        range_size = (
+            highest - lowest
+        )
 
-        prev = candles[-2]
-        curr = candles[-1]
+        print(
+            f"5 Candle Range = "
+            f"{range_size}"
+        )
 
-        # --------------------------------
-        # PATTERNS
-        # --------------------------------
-        if bullish_engulfing(prev, curr):
-            return "BUY"
+        # sideways threshold
+        return range_size < 5
 
-        if bearish_engulfing(prev, curr):
-            return "SELL"
+    # =====================================
+    # MAIN SIGNAL LOGIC
+    # =====================================
+    def generate_signal(self, symbol):
 
-        return "HOLD"
+        # -------------------------
+        # SIDEWAYS CHECK
+        # -------------------------
+        if self.is_sideways(symbol):
+
+            print(
+                "⛔ Sideways Market"
+            )
+
+            return None
+
+        candles = self.reader.get_last(
+            symbol,
+            2
+        )
+
+        if len(candles) < 2:
+            return None
+
+        prev = candles[0]
+
+        curr = candles[1]
+
+        # -------------------------
+        # BUY CALL
+        # -------------------------
+        if bullish_engulfing(
+            prev,
+            curr
+        ):
+
+            print(
+                "🟢 Bullish Engulfing"
+            )
+
+            return "BUY_CE"
+
+        # -------------------------
+        # BUY PUT
+        # -------------------------
+        if bearish_engulfing(
+            prev,
+            curr
+        ):
+
+            print(
+                "🔴 Bearish Engulfing"
+            )
+
+            return "BUY_PE"
+
+        return None

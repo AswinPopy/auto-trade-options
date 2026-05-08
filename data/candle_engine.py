@@ -5,14 +5,21 @@ from datetime import datetime
 class CandleEngine:
 
     def __init__(self):
+
         self.current = {}
+
         self.history = defaultdict(list)
 
     def update_tick(self, symbol, price):
 
         now = datetime.now()
-        minute = now.hour * 60 + now.minute
 
+        minute = (
+            now.hour * 60
+            + now.minute
+        )
+
+        # first candle
         if symbol not in self.current:
 
             self.current[symbol] = {
@@ -25,20 +32,31 @@ class CandleEngine:
 
             return None
 
-        c = self.current[symbol]
+        candle = self.current[symbol]
 
         # same candle
-        if c["minute"] == minute:
+        if candle["minute"] == minute:
 
-            c["high"] = max(c["high"], price)
-            c["low"] = min(c["low"], price)
-            c["close"] = price
+            candle["high"] = max(
+                candle["high"],
+                price
+            )
+
+            candle["low"] = min(
+                candle["low"],
+                price
+            )
+
+            candle["close"] = price
 
             return None
 
-        # candle completed
-        completed = c.copy()
-        self.history[symbol].append(completed)
+        # candle complete
+        completed = candle.copy()
+
+        self.history[symbol].append(
+            completed
+        )
 
         # new candle
         self.current[symbol] = {
@@ -52,7 +70,5 @@ class CandleEngine:
         return completed
 
     def get_last(self, symbol, n=2):
+
         return self.history[symbol][-n:]
-    
-    def get_recent_candles(self, symbol, limit=5):
-        return self.candles[symbol][-limit:]

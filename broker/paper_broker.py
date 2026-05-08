@@ -1,5 +1,3 @@
-from utils.trade_logger import TradeLogger
-
 class PaperBroker:
 
     def __init__(self, capital):
@@ -7,34 +5,58 @@ class PaperBroker:
         self.capital = capital
 
         self.positions = {}
+
         self.quantity = {}
 
         self.realized_pnl = 0
 
-        self.logger = TradeLogger()
-
+    # =========================
+    # BUY
+    # =========================
     def buy(self, symbol, price, qty):
 
+        # already exists
+        if symbol in self.positions:
+            return
+
         self.positions[symbol] = price
+
         self.quantity[symbol] = qty
 
-    def sell(self, symbol, price, qty):
+        print(
+            f"🟢 BOUGHT "
+            f"{symbol} @ {price}"
+        )
 
-        if symbol in self.positions:
+    # =========================
+    # SELL
+    # =========================
+    def sell(self, symbol, price):
 
-            entry = self.positions[symbol]
+        if symbol not in self.positions:
+            return
 
-            pnl = (price - entry) * qty
+        entry = self.positions[symbol]
 
-            self.logger.log_trade(
-                symbol=symbol,
-                entry=entry,
-                exit_price=price,
-                qty=qty,
-                pnl=pnl
-            )
-            
-            self.realized_pnl += pnl
+        qty = self.quantity[symbol]
 
-            del self.positions[symbol]
-            del self.quantity[symbol]
+        pnl = (
+            (price - entry)
+            * qty
+        )
+
+        self.realized_pnl += pnl
+
+        self.capital += pnl
+        print(
+            f"🔴 SOLD "
+            f"{symbol} @ {price}"
+        )
+
+        print(
+            f"PnL = {pnl:.2f}"
+        )
+
+        del self.positions[symbol]
+
+        del self.quantity[symbol]

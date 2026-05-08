@@ -15,35 +15,66 @@ class PnLDashboard:
         )
 
         # =========================
-        # LIVE PRICES
+        # HDFC SPOT PRICE
         # =========================
-        print("\n===== LIVE PRICES =====\n")
+        hdfc_price = prices.get(
+            "HDFCBANK",
+            0
+        )
 
-        for symbol, current in prices.items():
+        print(
+            "\n===== HDFC SPOT =====\n"
+        )
+
+        print(
+            f"HDFCBANK : "
+            f"{hdfc_price}"
+        )
+
+        # =========================
+        # OPTION PRICES
+        # =========================
+        print(
+            "\n===== OPTION PRICES =====\n"
+        )
+
+        for symbol, price in prices.items():
+
+            # skip stock symbol
+            if symbol == "HDFCBANK":
+                continue
 
             print(
-                f"{symbol}\n"
-                f"CURRENT: {current:.2f}\n"
+                f"{symbol:<25}"
+                f"{price}"
             )
 
         # =========================
         # OPEN POSITIONS
         # =========================
-        print("\n===== OPEN POSITIONS =====\n")
+        print(
+            "\n===== OPEN POSITIONS =====\n"
+        )
 
         if not self.broker.positions:
 
-            print("No open positions")
+            print(
+                "No open positions"
+            )
 
         else:
 
-            for symbol, entry in self.broker.positions.items():
-
-                qty = self.broker.quantity[symbol]
+            for symbol, entry in (
+                self.broker.positions.items()
+            ):
 
                 current = prices.get(
                     symbol,
                     entry
+                )
+
+                qty = (
+                    self.broker.quantity[symbol]
                 )
 
                 pnl = (
@@ -53,10 +84,22 @@ class PnLDashboard:
 
                 print(
                     f"{symbol}\n"
-                    f"ENTRY   : {entry:.2f}\n"
-                    f"CURRENT : {current:.2f}\n"
+                    f"ENTRY   : {entry}\n"
+                    f"CURRENT : {current}\n"
                     f"QTY     : {qty}\n"
                     f"PnL     : {pnl:.2f}\n"
                 )
 
-        print("\n==============================\n")
+        # =========================
+        # REALIZED PNL
+        # =========================
+        print(
+            f"REALIZED PnL : "
+            f"{self.broker.realized_pnl:.2f}"
+        )
+
+        print(
+            f"CAPITAL : "
+            f"{self.broker.capital:.2f}"
+        )
+    
