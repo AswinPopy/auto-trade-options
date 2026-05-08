@@ -1,3 +1,5 @@
+from utils.trade_logger import TradeLogger
+
 class PaperBroker:
 
     def __init__(self, capital):
@@ -8,6 +10,8 @@ class PaperBroker:
         self.quantity = {}
 
         self.realized_pnl = 0
+
+        self.logger = TradeLogger()
 
     def buy(self, symbol, price, qty):
 
@@ -22,6 +26,14 @@ class PaperBroker:
 
             pnl = (price - entry) * qty
 
+            self.logger.log_trade(
+                symbol=symbol,
+                entry=entry,
+                exit_price=price,
+                qty=qty,
+                pnl=pnl
+            )
+            
             self.realized_pnl += pnl
 
             del self.positions[symbol]
