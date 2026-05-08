@@ -7,9 +7,9 @@ class TradeLogger:
 
     def __init__(self):
 
-        self.file = "trades.csv"
+        self.file = "trade_log.csv"
 
-        # create file with headers
+        # create file if not exists
         if not os.path.exists(self.file):
 
             with open(
@@ -21,13 +21,13 @@ class TradeLogger:
                 writer = csv.writer(f)
 
                 writer.writerow([
-                    "date",
-                    "time",
-                    "symbol",
-                    "entry",
-                    "exit",
-                    "qty",
-                    "pnl"
+                    "Date",
+                    "Time",
+                    "Symbol",
+                    "Entry",
+                    "Exit",
+                    "Quantity",
+                    "PnL"
                 ])
 
     def log_trade(
@@ -50,11 +50,11 @@ class TradeLogger:
             writer = csv.writer(f)
 
             writer.writerow([
-                now.date(),
+                now.strftime("%Y-%m-%d"),
                 now.strftime("%H:%M:%S"),
                 symbol,
                 entry,
                 exit_price,
                 qty,
-                pnl
+                round(pnl, 2)
             ])
