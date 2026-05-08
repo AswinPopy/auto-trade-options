@@ -9,6 +9,23 @@ class PnLDashboard:
 
     def render(self, prices):
 
+        os.system("clear")
+
+        # =========================
+        # LIVE PRICES
+        # =========================
+        print("\n===== LIVE PRICES =====\n")
+
+        for symbol, current in prices.items():
+
+            print(
+                f"{symbol}\n"
+                f"CURRENT: {current:.2f}\n"
+            )
+
+        # =========================
+        # OPEN POSITIONS
+        # =========================
         print("\n===== OPEN POSITIONS =====\n")
 
         if not self.broker.positions:
@@ -32,11 +49,11 @@ class PnLDashboard:
                 )
 
                 print(
-                    f"{symbol:<25}\n"
-                    f"ENTRY: {entry:<10.2f}\n"
-                    f"CURRENT: {current:<10.2f}\n"
-                    f"QTY: {qty:<8}\n"
-                    f"PnL: {pnl:.2f}"
+                    f"{symbol}\n"
+                    f"ENTRY   : {entry:.2f}\n"
+                    f"CURRENT : {current:.2f}\n"
+                    f"QTY     : {qty}\n"
+                    f"PnL     : {pnl:.2f}\n"
                 )
 
         print("\n==============================\n")
