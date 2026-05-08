@@ -295,30 +295,23 @@ def on_ticks(ws, ticks):
         live_prices
     )
 
+def get_current_price(symbol):
+
+    quote = kite.ltp(f"NSE:{symbol}")
+
+    return quote[f"NSE:{symbol}"]["last_price"]
 
 # =====================================
 # CONNECT
 # =====================================
 def on_connect(ws, response):
+    
+    current_price = get_current_price(
+        "HDFCBANK"
+    )
 
-    WATCHLIST = [
-
-        # stock
-        "HDFCBANK",
-
-        # CE
-        "HDFCBANK26MAY780CE",
-        "HDFCBANK26MAY790CE",
-        "HDFCBANK26MAY800CE",
-        "HDFCBANK26MAY810CE",
-
-        # PE
-        "HDFCBANK26MAY780PE",
-        "HDFCBANK26MAY790PE",
-        "HDFCBANK26MAY800PE",
-        "HDFCBANK26MAY810PE"
-    ]
-
+    WATCHLIST = build_watchlist(current_price)
+    print(WATCHLIST)
     tokens = [
 
         symbol_to_token[s]
@@ -338,6 +331,31 @@ def on_connect(ws, response):
     print(
         "✅ Connected"
     )
+
+
+def get_strike_step(price, step=10):
+    return round(price / step) * step
+
+def build_watchlist(current_price):
+    step = 10
+
+    atm = get_strike_step(current_price, step)
+
+    strikes = [
+        atm - 20,
+        atm - 10,
+        atm,
+        atm + 10,
+        atm + 20
+    ]
+
+    watchlist = ["HDFCBANK"]
+
+    for strike in strikes:
+        watchlist.append(f"HDFCBANK26MAY{strike}CE")
+        watchlist.append(f"HDFCBANK26MAY{strike}PE")
+
+    return watchlist
 
 
 # =====================================

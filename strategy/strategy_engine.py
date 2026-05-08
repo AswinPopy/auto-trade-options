@@ -105,7 +105,7 @@ class StrategyEngine:
             f"{range_size:.2f}"
         )
 
-        return range_size < 5
+        return range_size < 1
 
     # =====================================
     # TREND FILTER
@@ -153,7 +153,7 @@ class StrategyEngine:
             f"{body_size:.2f}"
         )
 
-        return body_size >= 2
+        return body_size >= 0.35
 
     # =====================================
     # VOLUME CONFIRMATION
