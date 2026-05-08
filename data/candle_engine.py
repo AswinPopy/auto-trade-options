@@ -53,3 +53,6 @@ class CandleEngine:
 
     def get_last(self, symbol, n=2):
         return self.history[symbol][-n:]
+    
+    def get_recent_candles(self, symbol, limit=5):
+        return self.candles[symbol][-limit:]
