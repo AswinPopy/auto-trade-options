@@ -1,0 +1,20 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY = os.getenv("KITE_API_KEY")
+ACCESS_TOKEN = os.getenv("KITE_ACCESS_TOKEN")
+API_SECRET = os.getenv("KITE_API_SECRET")
+
+INITIAL_CAPITAL = 100000
+SYMBOL_TOKEN = 738561
+
+MAX_TRADES_PER_MIN = 2
+
+LIVE_TRADING = False
+
+OPENING_RANGE_MINUTES = 15
+GAP_THRESHOLD_PERCENT = 1.0 
+
+
