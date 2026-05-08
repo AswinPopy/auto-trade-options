@@ -9,7 +9,10 @@ class PnLDashboard:
 
     def render(self, prices):
 
-        os.system("clear")
+        os.system(
+            "cls" if os.name == "nt"
+            else "clear"
+        )
 
         # =========================
         # LIVE PRICES
