@@ -63,7 +63,7 @@ dashboard = PnLDashboard(
     broker
 )
 
-UNDERLYING = ["HDFCBANK", "YESBANK"]
+UNDERLYING = ["HDFCBANK"]
 
 live_prices = {}
 
