@@ -1,9 +1,7 @@
-from strategy.patterns import (
-    bullish_engulfing,
-    bearish_engulfing
+from strategy.indicators import (
+    calculate_ema,
+    calculate_vwap
 )
-
-from datetime import datetime
 
 
 class StrategyEngine:
@@ -13,126 +11,29 @@ class StrategyEngine:
         self.reader = candle_reader
 
     # =====================================
-    # TIME FILTER
+    # EMA TREND
     # =====================================
-    def valid_time(self):
+    def ema_trend(self, closes):
 
-        now = datetime.now()
-
-        total_minutes = (
-            now.hour * 60
-            + now.minute
+        ema = calculate_ema(
+            closes,
+            20
         )
 
-        market_open = (
-            9 * 60 + 20
-        )
-
-        market_close = (
-            15 * 60 + 15
-        )
-
-        lunch_start = (
-            12 * 60
-        )
-
-        lunch_end = (
-            13 * 60 + 30
-        )
-
-        # before market time
-        if total_minutes < market_open:
-
-            print(
-                "⛔ Before Trading Window"
-            )
-
-            return False
-
-        # lunch sideways
-        if (
-            lunch_start
-            <= total_minutes
-            <= lunch_end
-        ):
-
-            print(
-                "⛔ Lunch Sideways Time"
-            )
-
-            return False
-
-        # after allowed time
-        if total_minutes > market_close:
-
-            print(
-                "⛔ Market Closing Time"
-            )
-
-            return False
-
-        return True
-
-    # =====================================
-    # SIDEWAYS FILTER
-    # =====================================
-    def is_sideways(self, symbol):
-
-        candles = self.reader.get_last(
-            symbol,
-            5
-        )
-
-        if len(candles) < 5:
-            return True
-
-        highest = max(
-            c["high"]
-            for c in candles
-        )
-
-        lowest = min(
-            c["low"]
-            for c in candles
-        )
-
-        range_size = (
-            highest - lowest
-        )
-
-        print(
-            f"5 Candle Range = "
-            f"{range_size:.2f}"
-        )
-
-        return range_size < 1
-
-    # =====================================
-    # TREND FILTER
-    # =====================================
-    def get_trend(self, symbol):
-
-        candles = self.reader.get_last(
-            symbol,
-            5
-        )
-
-        if len(candles) < 5:
+        if len(ema) < 2:
             return None
 
-        first_close = candles[0]["close"]
+        # rising EMA
+        if ema[-1] > ema[-2]:
 
-        last_close = candles[-1]["close"]
-
-        if last_close > first_close:
-
-            print("📈 UPTREND")
+            print("📈 EMA RISING")
 
             return "UP"
 
-        elif last_close < first_close:
+        # falling EMA
+        if ema[-1] < ema[-2]:
 
-            print("📉 DOWNTREND")
+            print("📉 EMA FALLING")
 
             return "DOWN"
 
@@ -141,35 +42,29 @@ class StrategyEngine:
     # =====================================
     # STRONG CANDLE
     # =====================================
-    def strong_candle(self, candle):
+    def strong_candle(
+        self,
+        candle
+    ):
 
-        body_size = abs(
+        body = abs(
             candle["close"]
             - candle["open"]
         )
 
         print(
-            f"Candle Body = "
-            f"{body_size:.2f}"
+            f"Body Size = {body}"
         )
 
-        return body_size >= 0.35
+        return body >= 0.75
 
     # =====================================
-    # VOLUME CONFIRMATION
+    # VOLUME SPIKE
     # =====================================
-    def volume_confirmed(
+    def volume_spike(
         self,
-        symbol
+        candles
     ):
-
-        candles = self.reader.get_last(
-            symbol,
-            5
-        )
-
-        if len(candles) < 5:
-            return False
 
         current_volume = candles[-1]["volume"]
 
@@ -178,7 +73,7 @@ class StrategyEngine:
                 c["volume"]
                 for c in candles[:-1]
             )
-            / 4
+            / (len(candles) - 1)
         )
 
         print(
@@ -193,158 +88,335 @@ class StrategyEngine:
 
         return (
             current_volume
-            > avg_volume
+            > avg_volume * 2
         )
 
     # =====================================
-    # BREAKOUT
+    # SMALL PULLBACK
     # =====================================
-    def breakout_confirmed(
+    def small_pullback(
         self,
-        prev,
-        curr,
-        signal
+        candles,
+        trend
     ):
 
-        if signal == "BUY_CE":
+        if len(candles) < 3:
+            return False
+
+        c1 = candles[-3]
+        c2 = candles[-2]
+        c3 = candles[-1]
+
+        # CE pullback
+        if trend == "UP":
 
             return (
-                curr["high"]
-                > prev["high"]
+                c2["close"]
+                < c1["close"]
+                and
+                c3["close"]
+                > c2["close"]
             )
 
-        if signal == "BUY_PE":
+        # PE pullback
+        if trend == "DOWN":
 
             return (
-                curr["low"]
-                < prev["low"]
+                c2["close"]
+                > c1["close"]
+                and
+                c3["close"]
+                < c2["close"]
             )
 
         return False
 
     # =====================================
-    # MAIN SIGNAL ENGINE
+    # WEAK PULLBACK VOLUME
     # =====================================
-    def generate_signal(self, symbol):
+    def weak_pullback_volume(
+        self,
+        candles
+    ):
 
-        # -------------------------
-        # TIME FILTER
-        # -------------------------
-        if not self.valid_time():
+        if len(candles) < 3:
+            return False
 
-            return None
+        trend_volume = candles[-3]["volume"]
 
-        # -------------------------
-        # SIDEWAYS FILTER
-        # -------------------------
-        if self.is_sideways(symbol):
+        pullback_volume = candles[-2]["volume"]
 
-            print(
-                "⛔ Sideways Market"
+        return (
+            pullback_volume
+            < trend_volume
+        )
+
+    # =====================================
+    # VWAP RESPECTED
+    # =====================================
+    def vwap_respected(
+        self,
+        candle,
+        vwap,
+        trend
+    ):
+
+        if trend == "UP":
+
+            return (
+                candle["low"]
+                >= vwap
             )
 
-            return None
+        if trend == "DOWN":
+
+            return (
+                candle["high"]
+                <= vwap
+            )
+
+        return False
+
+    # =====================================
+    # BREAKOUT
+    # =====================================
+    def breakout(
+        self,
+        candles,
+        trend
+    ):
+
+        if len(candles) < 3:
+            return False
+
+        pullback = candles[-2]
+
+        current = candles[-1]
+
+        # CE breakout
+        if trend == "UP":
+
+            return (
+                current["high"]
+                > pullback["high"]
+            )
+
+        # PE breakout
+        if trend == "DOWN":
+
+            return (
+                current["low"]
+                < pullback["low"]
+            )
+
+        return False
+
+    # =====================================
+    # MAIN STRATEGY
+    # =====================================
+    def generate_signal(
+        self,
+        symbol
+    ):
 
         candles = self.reader.get_last(
             symbol,
-            2
+            25
         )
 
-        if len(candles) < 2:
+        if len(candles) < 25:
             return None
 
-        prev = candles[0]
+        closes = [
+            c["close"]
+            for c in candles
+        ]
 
-        curr = candles[1]
+        current_price = closes[-1]
 
         # -------------------------
-        # TREND FILTER
+        # VWAP
         # -------------------------
-        trend = self.get_trend(symbol)
+        vwap = calculate_vwap(
+            candles
+        )
+
+        print(f"VWAP = {vwap}")
+
+        # -------------------------
+        # EMA TREND
+        # -------------------------
+        trend = self.ema_trend(
+            closes
+        )
 
         if trend is None:
             return None
 
-        # -------------------------
-        # STRONG CANDLE
-        # -------------------------
-        if not self.strong_candle(curr):
-
-            print(
-                "⛔ Weak Candle"
-            )
-
-            return None
-
-        # -------------------------
-        # VOLUME CONFIRMATION
-        # -------------------------
-        if not self.volume_confirmed(
-            symbol
-        ):
-
-            print(
-                "⛔ Weak Volume"
-            )
-
-            return None
-
         # =========================
-        # BUY CE
+        # BUY CE CONDITIONS
         # =========================
-        if (
-            bullish_engulfing(
-                prev,
-                curr
-            )
-            and trend == "UP"
-        ):
+        if trend == "UP":
 
-            signal = "BUY_CE"
+            if current_price <= vwap:
 
-            if self.breakout_confirmed(
-                prev,
-                curr,
-                signal
+                print(
+                    "⛔ Price Below VWAP"
+                )
+
+                return None
+
+            if not self.small_pullback(
+                candles,
+                trend
             ):
 
                 print(
-                    "🟢 BUY CE CONFIRMED"
+                    "⛔ No Pullback"
                 )
 
-                return signal
+                return None
 
-            print(
-                "⛔ No Bullish Breakout"
-            )
-
-        # =========================
-        # BUY PE
-        # =========================
-        if (
-            bearish_engulfing(
-                prev,
-                curr
-            )
-            and trend == "DOWN"
-        ):
-
-            signal = "BUY_PE"
-
-            if self.breakout_confirmed(
-                prev,
-                curr,
-                signal
+            if not self.weak_pullback_volume(
+                candles
             ):
 
                 print(
-                    "🔴 BUY PE CONFIRMED"
+                    "⛔ Pullback Volume Strong"
                 )
 
-                return signal
+                return None
+
+            if not self.vwap_respected(
+                candles[-1],
+                vwap,
+                trend
+            ):
+
+                print(
+                    "⛔ VWAP Not Respected"
+                )
+
+                return None
+
+            if not self.strong_candle(
+                candles[-1]
+            ):
+
+                print(
+                    "⛔ Weak Green Candle"
+                )
+
+                return None
+
+            if not self.volume_spike(
+                candles[-5:]
+            ):
+
+                print(
+                    "⛔ No Volume Spike"
+                )
+
+                return None
+
+            if not self.breakout(
+                candles,
+                trend
+            ):
+
+                print(
+                    "⛔ No Breakout"
+                )
+
+                return None
 
             print(
-                "⛔ No Bearish Breakout"
+                "🟢 BUY CE SIGNAL"
             )
+
+            return "BUY_CE"
+
+        # =========================
+        # BUY PE CONDITIONS
+        # =========================
+        if trend == "DOWN":
+
+            if current_price >= vwap:
+
+                print(
+                    "⛔ Price Above VWAP"
+                )
+
+                return None
+
+            if not self.small_pullback(
+                candles,
+                trend
+            ):
+
+                print(
+                    "⛔ No Pullback"
+                )
+
+                return None
+
+            if not self.weak_pullback_volume(
+                candles
+            ):
+
+                print(
+                    "⛔ Pullback Volume Strong"
+                )
+
+                return None
+
+            if not self.vwap_respected(
+                candles[-1],
+                vwap,
+                trend
+            ):
+
+                print(
+                    "⛔ VWAP Not Respected"
+                )
+
+                return None
+
+            if not self.strong_candle(
+                candles[-1]
+            ):
+
+                print(
+                    "⛔ Weak Red Candle"
+                )
+
+                return None
+
+            if not self.volume_spike(
+                candles[-5:]
+            ):
+
+                print(
+                    "⛔ No Volume Spike"
+                )
+
+                return None
+
+            if not self.breakout(
+                candles,
+                trend
+            ):
+
+                print(
+                    "⛔ No Breakdown"
+                )
+
+                return None
+
+            print(
+                "🔴 BUY PE SIGNAL"
+            )
+
+            return "BUY_PE"
 
         return None

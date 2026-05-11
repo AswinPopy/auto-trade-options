@@ -63,7 +63,7 @@ dashboard = PnLDashboard(
     broker
 )
 
-UNDERLYING = "HDFCBANK"
+UNDERLYING = ["HDFCBANK", "YESBANK"]
 
 live_prices = {}
 
@@ -88,6 +88,9 @@ for i in nse_instruments:
 
     symbol = i["tradingsymbol"]
 
+    if symbol not in UNDERLYING:
+        continue
+    
     token_to_symbol[token] = symbol
 
     symbol_to_token[symbol] = token
@@ -106,9 +109,19 @@ for i in nfo_instruments:
 
     symbol = i["tradingsymbol"]
 
+    if not any(
+
+        symbol.startswith(stock)
+
+        for stock in UNDERLYING
+    ):
+
+        continue
+
     token_to_symbol[token] = symbol
 
     symbol_to_token[symbol] = token
+
 # =====================================
 # GET SYMBOL
 # =====================================
@@ -139,17 +152,16 @@ def on_ticks(ws, ticks):
         volume = tick['last_traded_quantity']
         print("volume", volume)
         symbol = get_symbol(token)
-
+        
         if symbol is None:
             continue
 
+        if symbol not in UNDERLYING:
+            continue
+        
         live_prices[symbol] = price
-
-        # ==========================
-        # BUILD CANDLE ONLY
-        # FOR HDFCBANK STOCK
-        # ==========================
-        if symbol == UNDERLYING:
+        
+        if symbol in UNDERLYING:
 
             completed = (
                 candle_engine.update_tick(
@@ -169,7 +181,7 @@ def on_ticks(ws, ticks):
 
                 signal = (
                     strategy.generate_signal(
-                        UNDERLYING
+                        symbol
                     )
                 )
 
@@ -276,7 +288,7 @@ def on_ticks(ws, ticks):
             )
 
             # target
-            if pnl >= 500:
+            if pnl >= 1000:
 
                 broker.sell(
                     position,
@@ -284,7 +296,7 @@ def on_ticks(ws, ticks):
                 )
 
             # stoploss
-            elif pnl <= -300:
+            elif pnl <= -500:
 
                 broker.sell(
                     position,
@@ -305,18 +317,33 @@ def get_current_price(symbol):
 # CONNECT
 # =====================================
 def on_connect(ws, response):
-    
-    current_price = get_current_price(
-        "HDFCBANK"
-    )
 
-    WATCHLIST = build_watchlist(current_price)
-    print(WATCHLIST)
+    watchlist = []
+
+    for stock in UNDERLYING:
+
+        current_price = (
+            get_current_price(stock)
+        )
+
+        stock_watchlist = (
+            build_watchlist(
+                stock,
+                current_price
+            )
+        )
+
+        watchlist.extend(
+            stock_watchlist
+        )
+
+    print(watchlist)
+
     tokens = [
 
         symbol_to_token[s]
 
-        for s in WATCHLIST
+        for s in watchlist
 
         if s in symbol_to_token
     ]
@@ -328,34 +355,57 @@ def on_connect(ws, response):
         tokens
     )
 
-    print(
-        "✅ Connected"
-    )
+    print("✅ Connected")
+
 
 
 def get_strike_step(price, step=10):
     return round(price / step) * step
 
-def build_watchlist(current_price):
+def build_watchlist(
+    stock,
+    current_price
+):
+
+    # strike gap
     step = 10
 
-    atm = get_strike_step(current_price, step)
+    # YESBANK smaller strikes
+    if stock == "YESBANK":
+        step = 1
+
+    atm = get_strike_step(
+        current_price,
+        step
+    )
 
     strikes = [
-        atm - 20,
-        atm - 10,
+        atm - (2 * step),
+        atm - step,
         atm,
-        atm + 10,
-        atm + 20
+        atm + step,
+        atm + (2 * step)
     ]
 
-    watchlist = ["HDFCBANK"]
+    watchlist = [stock]
+
+    expiry = "26MAY"
 
     for strike in strikes:
-        watchlist.append(f"HDFCBANK26MAY{strike}CE")
-        watchlist.append(f"HDFCBANK26MAY{strike}PE")
+
+        watchlist.append(
+            f"{stock}{expiry}"
+            f"{strike}CE"
+        )
+
+        watchlist.append(
+            f"{stock}{expiry}"
+            f"{strike}PE"
+        )
 
     return watchlist
+
+
 
 
 # =====================================
