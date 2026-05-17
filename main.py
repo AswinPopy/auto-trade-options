@@ -34,9 +34,6 @@ from broker.paper_broker import (
     PaperBroker
 )
 
-from dashboard.pnl_dashboard import (
-    PnLDashboard
-)
 
 from market.option_selector import (
     get_ce_symbol,
@@ -59,9 +56,6 @@ strategy = StrategyEngine(
 broker = PaperBroker(
 )
 
-dashboard = PnLDashboard(
-    broker
-)
 
 exit_manager = ExitManager(
     candle_engine,
@@ -308,10 +302,6 @@ def on_ticks(ws, ticks):
                     position
                 )
 
-    
-    dashboard.render(
-        live_prices
-    )
 
 def get_current_price(symbol):
 
