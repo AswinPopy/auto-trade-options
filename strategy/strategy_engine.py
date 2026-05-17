@@ -1,3 +1,5 @@
+import logging
+
 from strategy.indicators import (
     calculate_ema,
     calculate_vwap
@@ -13,27 +15,45 @@ class StrategyEngine:
     # =====================================
     # EMA TREND
     # =====================================
-    def ema_trend(self, closes):
+    def ema_trend(
+    self,
+    closes
+):
 
         ema = calculate_ema(
             closes,
             20
         )
 
-        if len(ema) < 2:
+        if len(ema) < 5:
             return None
 
-        # rising EMA
-        if ema[-1] > ema[-2]:
+        slope_percent = (
+            (
+                ema[-1]
+                - ema[-5]
+            )
+            /
+            ema[-5]
+        ) * 100
 
-            print("📈 EMA RISING")
+        current_price = closes[-1]
+
+        current_ema = ema[-1]
+
+        # bullish
+        if (
+            slope_percent > 0.1
+            and current_price > current_ema
+        ):
 
             return "UP"
 
-        # falling EMA
-        if ema[-1] < ema[-2]:
-
-            print("📉 EMA FALLING")
+        # bearish
+        if (
+            slope_percent < -0.1
+            and current_price < current_ema
+        ):
 
             return "DOWN"
 
@@ -43,20 +63,36 @@ class StrategyEngine:
     # STRONG CANDLE
     # =====================================
     def strong_candle(
-        self,
-        candle
-    ):
+    self,
+    candle
+):
 
         body = abs(
             candle["close"]
             - candle["open"]
         )
 
-        print(
-            f"Body Size = {body}"
+        total_range = (
+            candle["high"]
+            - candle["low"]
         )
 
-        return body >= 0.75
+        if total_range == 0:
+            return False
+
+        body_strength = (
+            body
+            / total_range
+        )
+
+        print(
+            f"Body Strength = "
+            f"{body_strength}"
+        )
+
+        return (
+            body_strength >= 0.7
+        )
 
     # =====================================
     # VOLUME SPIKE
@@ -155,24 +191,28 @@ class StrategyEngine:
     # VWAP RESPECTED
     # =====================================
     def vwap_respected(
-        self,
-        candle,
-        vwap,
-        trend
-    ):
+    self,
+    candle,
+    vwap,
+    trend
+):
+
+        tolerance = (
+            vwap * 0.001
+        )
 
         if trend == "UP":
 
             return (
                 candle["low"]
-                >= vwap
+                >= vwap - tolerance
             )
 
         if trend == "DOWN":
 
             return (
                 candle["high"]
-                <= vwap
+                <= vwap + tolerance
             )
 
         return False
@@ -181,10 +221,10 @@ class StrategyEngine:
     # BREAKOUT
     # =====================================
     def breakout(
-        self,
-        candles,
-        trend
-    ):
+    self,
+    candles,
+    trend
+):
 
         if len(candles) < 3:
             return False
@@ -197,7 +237,7 @@ class StrategyEngine:
         if trend == "UP":
 
             return (
-                current["high"]
+                current["close"]
                 > pullback["high"]
             )
 
@@ -205,7 +245,7 @@ class StrategyEngine:
         if trend == "DOWN":
 
             return (
-                current["low"]
+                current["close"]
                 < pullback["low"]
             )
 
@@ -241,7 +281,7 @@ class StrategyEngine:
             candles
         )
 
-        print(f"VWAP = {vwap}")
+        print(f"VWAP {symbol} = {vwap}")
 
         # -------------------------
         # EMA TREND
@@ -249,8 +289,9 @@ class StrategyEngine:
         trend = self.ema_trend(
             closes
         )
-
+        print(f"CURRENT TREND {symbol} : {trend}")
         if trend is None:
+            logging.info("RETURN : No trend")
             return None
 
         # =========================
@@ -259,18 +300,19 @@ class StrategyEngine:
         if trend == "UP":
 
             if current_price <= vwap:
-
+                logging.info(f"Current price {symbol} : {current_price}")
+                logging.info(f"vwap : {vwap}")
                 print(
                     "⛔ Price Below VWAP"
                 )
-
+                logging.info(f"RETURN : price below VWAP")
                 return None
 
             if not self.small_pullback(
                 candles,
                 trend
             ):
-
+                logging.info(f"RETURN : No pullback")
                 print(
                     "⛔ No Pullback"
                 )
@@ -280,6 +322,7 @@ class StrategyEngine:
             if not self.weak_pullback_volume(
                 candles
             ):
+                logging.info(f"RETURN : strong pullback volume")
 
                 print(
                     "⛔ Pullback Volume Strong"
@@ -288,11 +331,11 @@ class StrategyEngine:
                 return None
 
             if not self.vwap_respected(
-                candles[-1],
+                candles[-2],
                 vwap,
                 trend
             ):
-
+                logging.info(f"RETURN : VWAP Not Respected")
                 print(
                     "⛔ VWAP Not Respected"
                 )
@@ -302,7 +345,7 @@ class StrategyEngine:
             if not self.strong_candle(
                 candles[-1]
             ):
-
+                logging.info(f"RETURN : Weak Green Candle")
                 print(
                     "⛔ Weak Green Candle"
                 )
@@ -313,6 +356,7 @@ class StrategyEngine:
                 candles[-5:]
             ):
 
+                logging.info(f"RETURN : No Volume Spike")
                 print(
                     "⛔ No Volume Spike"
                 )
@@ -323,13 +367,13 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-
+                logging.info(f"RETURN : No breakout")
                 print(
                     "⛔ No Breakout"
                 )
 
                 return None
-
+            logging.info(f"RETURN : BUY CE SIGNAL")
             print(
                 "🟢 BUY CE SIGNAL"
             )
@@ -342,7 +386,7 @@ class StrategyEngine:
         if trend == "DOWN":
 
             if current_price >= vwap:
-
+                logging.info(f"RETURN : price above VWAP")
                 print(
                     "⛔ Price Above VWAP"
                 )
@@ -353,7 +397,7 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-
+                logging.info(f"RETURN : No pullback")
                 print(
                     "⛔ No Pullback"
                 )
@@ -363,7 +407,7 @@ class StrategyEngine:
             if not self.weak_pullback_volume(
                 candles
             ):
-
+                logging.info(f"RETURN : strong pullback volume")
                 print(
                     "⛔ Pullback Volume Strong"
                 )
@@ -371,11 +415,11 @@ class StrategyEngine:
                 return None
 
             if not self.vwap_respected(
-                candles[-1],
+                candles[-2],
                 vwap,
                 trend
             ):
-
+                logging.info(f"RETURN : VWAP Not Respected")
                 print(
                     "⛔ VWAP Not Respected"
                 )
@@ -385,7 +429,7 @@ class StrategyEngine:
             if not self.strong_candle(
                 candles[-1]
             ):
-
+                logging.info(f"RETURN : Weak RED Candle")
                 print(
                     "⛔ Weak Red Candle"
                 )
@@ -395,7 +439,7 @@ class StrategyEngine:
             if not self.volume_spike(
                 candles[-5:]
             ):
-
+                logging.info(f"RETURN : No Volume Spike")
                 print(
                     "⛔ No Volume Spike"
                 )
@@ -406,13 +450,13 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-
+                logging.info(f"RETURN : No Breakdown")
                 print(
                     "⛔ No Breakdown"
                 )
 
                 return None
-
+            logging.info(f"RETURN : BUY PE SIGNAL")
             print(
                 "🔴 BUY PE SIGNAL"
             )

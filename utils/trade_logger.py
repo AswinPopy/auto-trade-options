@@ -2,7 +2,6 @@ import csv
 import os
 from datetime import datetime
 
-
 class TradeLogger:
 
     def __init__(self):
@@ -38,9 +37,10 @@ class TradeLogger:
         qty,
         pnl
     ):
+        prev_capital = self.get_last_capital()
+        new_capital = prev_capital + pnl
 
         now = datetime.now()
-
         with open(
             self.file,
             "a",
@@ -56,5 +56,20 @@ class TradeLogger:
                 entry,
                 exit_price,
                 qty,
-                round(pnl, 2)
+                round(pnl, 2),
+                round(new_capital, 2)
             ])
+
+    def get_last_capital(self, default_capital=100000):
+        if not os.path.exists(self.file):
+            return default_capital
+
+        last_capital = default_capital
+
+        with open(self.file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row.get("Capital"):
+                    last_capital = float(row["Capital"])
+
+        return last_capital

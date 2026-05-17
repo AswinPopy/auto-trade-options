@@ -1,5 +1,11 @@
+import copy
+from utils.strike_steps import (
+    get_strike_step
+)
+from broker.kite_session import kite
+from config import UNDERLYING
+import logging
 from kiteconnect import (
-    KiteConnect,
     KiteTicker
 )
 
@@ -7,10 +13,13 @@ from risk.risk_manager import (
     RiskManager
 )
 
+from risk.exit_manager import (
+    ExitManager
+)
+
 from config import (
     API_KEY,
-    ACCESS_TOKEN,
-    CAPITAL
+    ACCESS_TOKEN
 )
 
 from data.candle_engine import (
@@ -34,17 +43,9 @@ from market.option_selector import (
     get_pe_symbol
 )
 
-
 # =====================================
 # INIT
 # =====================================
-kite = KiteConnect(
-    api_key=API_KEY
-)
-
-kite.set_access_token(
-    ACCESS_TOKEN
-)
 
 risk_manager = RiskManager(
 )
@@ -56,14 +57,19 @@ strategy = StrategyEngine(
 )
 
 broker = PaperBroker(
-    CAPITAL
 )
 
 dashboard = PnLDashboard(
     broker
 )
 
-UNDERLYING = ["HDFCBANK"]
+exit_manager = ExitManager(
+    candle_engine,
+    broker
+)
+
+
+watchlist = copy.deepcopy(UNDERLYING)
 
 live_prices = {}
 
@@ -117,7 +123,7 @@ for i in nfo_instruments:
     ):
 
         continue
-
+    
     token_to_symbol[token] = symbol
 
     symbol_to_token[symbol] = token
@@ -138,6 +144,7 @@ def get_symbol(token):
 def on_ticks(ws, ticks):
 
     global live_prices
+    global watchlist
 
     for tick in ticks:
 
@@ -152,16 +159,16 @@ def on_ticks(ws, ticks):
         volume = tick['last_traded_quantity']
         print("volume", volume)
         symbol = get_symbol(token)
-        
+
         if symbol is None:
             continue
 
-        if symbol not in UNDERLYING:
+        if symbol not in watchlist:
             continue
         
         live_prices[symbol] = price
         
-        if symbol in UNDERLYING:
+        if symbol in watchlist:
 
             completed = (
                 candle_engine.update_tick(
@@ -219,6 +226,7 @@ def on_ticks(ws, ticks):
                             )
 
                             return
+                        logging.info(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
                         broker.buy(
                             ce_symbol,
                             ce_price,
@@ -254,11 +262,14 @@ def on_ticks(ws, ticks):
                             )
 
                             return
+                        logging.info(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
                         broker.buy(
                             pe_symbol,
                             pe_price,
                             qty
                         )
+        else:
+            logging.info(f"SYMBOL NOT IN WATCH LIST : {symbol}")
 
         # ==========================
         # EXIT LOGIC
@@ -267,14 +278,6 @@ def on_ticks(ws, ticks):
             broker.positions.keys()
         ):
 
-            entry = broker.positions[
-                position
-            ]
-
-            qty = broker.quantity[
-                position
-            ]
-
             current = live_prices.get(
                 position
             )
@@ -282,26 +285,25 @@ def on_ticks(ws, ticks):
             if current is None:
                 continue
 
-            pnl = (
-                (current - entry)
-                * qty
+            should_exit = (
+                exit_manager.should_exit(
+                    position,
+                    current,
+                    live_prices
+                )
             )
 
-            # target
-            if pnl >= 1000:
+            if should_exit:
 
                 broker.sell(
                     position,
                     current
                 )
 
-            # stoploss
-            elif pnl <= -500:
-
-                broker.sell(
-                    position,
-                    current
+                exit_manager.clear_position(
+                    position
                 )
+
 
     dashboard.render(
         live_prices
@@ -318,10 +320,9 @@ def get_current_price(symbol):
 # =====================================
 def on_connect(ws, response):
 
-    watchlist = []
+    global watchlist
 
     for stock in UNDERLYING:
-
         current_price = (
             get_current_price(stock)
         )
@@ -337,7 +338,7 @@ def on_connect(ws, response):
             stock_watchlist
         )
 
-    print(watchlist)
+    print("WATCH LIST", watchlist) 
 
     tokens = [
 
@@ -359,7 +360,7 @@ def on_connect(ws, response):
 
 
 
-def get_strike_step(price, step=10):
+def get_atm(price, step=10):
     return round(price / step) * step
 
 def build_watchlist(
@@ -368,16 +369,12 @@ def build_watchlist(
 ):
 
     # strike gap
-    step = 10
+    step = get_strike_step(stock)
 
-    # YESBANK smaller strikes
-    if stock == "YESBANK":
-        step = 1
-
-    atm = get_strike_step(
+    atm = int(get_atm(
         current_price,
         step
-    )
+    ))
 
     strikes = [
         atm - (2 * step),
@@ -404,7 +401,6 @@ def build_watchlist(
         )
 
     return watchlist
-
 
 
 

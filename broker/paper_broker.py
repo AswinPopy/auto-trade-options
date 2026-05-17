@@ -4,9 +4,11 @@ from utils.trade_logger import (
 from datetime import datetime
 class PaperBroker:
 
-    def __init__(self, capital):
+    def __init__(self):
 
-        self.capital = capital
+        self.logger = TradeLogger()
+
+        self.capital = self.logger.get_last_capital()
 
         self.positions = {}
 
@@ -14,7 +16,6 @@ class PaperBroker:
 
         self.realized_pnl = 0
 
-        self.logger = TradeLogger()
 
     # =========================
     # BUY
