@@ -167,109 +167,113 @@ def on_ticks(ws, ticks):
             continue
         
         live_prices[symbol] = price
-        
-        if symbol in watchlist:
 
-            completed = (
-                candle_engine.update_tick(
-                    symbol,
-                    price,
-                    volume
+        completed = (
+            candle_engine.update_tick(
+                symbol,
+                price,
+                volume
+            )
+        )
+
+        if completed:
+
+            print(
+                "\nCANDLE CLOSED"
+            )
+
+            print(completed)
+
+            signal = (
+                strategy.generate_signal(
+                    symbol
                 )
             )
 
-            if completed:
+            print(
+                f"SIGNAL = "
+                f"{signal}"
+            )
 
-                print(
-                    "\nCANDLE CLOSED"
+            # ==================
+            # BUY CALL
+            # ==================
+            if signal == "BUY_CE":
+
+                ce_symbol = (
+                    get_ce_symbol(symbol, price)
                 )
 
-                print(completed)
-
-                signal = (
-                    strategy.generate_signal(
-                        symbol
+                if ce_symbol not in watchlist:
+                    print(f"CE SYMBOL : {ce_symbol} not in watch list")
+                    return
+                
+                ce_price = (
+                    live_prices.get(
+                        ce_symbol
                     )
                 )
 
-                print(
-                    f"SIGNAL = "
-                    f"{signal}"
+                if ce_price:
+
+                    qty = risk_manager.get_quantity(
+                        broker.capital,
+                        ce_price
+                    )
+                    
+                    if broker.positions:
+
+                        print(
+                            "⛔ Existing Position Open"
+                        )
+
+                        return
+                    logging.info(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
+                    broker.buy(
+                        ce_symbol,
+                        ce_price,
+                        qty
+                    )
+
+            # ==================
+            # BUY PUT
+            # ==================
+            elif signal == "BUY_PE":
+
+                pe_symbol = (
+                    get_pe_symbol(symbol, price)
                 )
 
-                # ==================
-                # BUY CALL
-                # ==================
-                if signal == "BUY_CE":
+                if pe_symbol not in watchlist:
+                    print(f"PE SYMBOL : {pe_symbol} not in watch list")
+                    return
+                
+                pe_price = (
+                    live_prices.get(
+                        pe_symbol
+                    )
+                )
 
-                    ce_symbol = (
-                        get_ce_symbol(price)
+                if pe_price:
+
+                    qty = risk_manager.get_quantity(
+                        broker.capital,
+                        pe_price
                     )
 
-                    ce_price = (
-                        live_prices.get(
-                            ce_symbol
+                    if broker.positions:
+
+                        print(
+                            "⛔ Existing Position Open"
                         )
+
+                        return
+                    logging.info(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
+                    broker.buy(
+                        pe_symbol,
+                        pe_price,
+                        qty
                     )
-
-                    if ce_price:
-
-                        qty = risk_manager.get_quantity(
-                            broker.capital,
-                            ce_price
-                        )
-                      
-                        if broker.positions:
-
-                            print(
-                                "⛔ Existing Position Open"
-                            )
-
-                            return
-                        logging.info(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
-                        broker.buy(
-                            ce_symbol,
-                            ce_price,
-                            qty
-                        )
-
-                # ==================
-                # BUY PUT
-                # ==================
-                elif signal == "BUY_PE":
-
-                    pe_symbol = (
-                        get_pe_symbol(price)
-                    )
-
-                    pe_price = (
-                        live_prices.get(
-                            pe_symbol
-                        )
-                    )
-
-                    if pe_price:
-
-                        qty = risk_manager.get_quantity(
-                            broker.capital,
-                            pe_price
-                        )
-
-                        if broker.positions:
-
-                            print(
-                                "⛔ Existing Position Open"
-                            )
-
-                            return
-                        logging.info(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
-                        broker.buy(
-                            pe_symbol,
-                            pe_price,
-                            qty
-                        )
-        else:
-            logging.info(f"SYMBOL NOT IN WATCH LIST : {symbol}")
 
         # ==========================
         # EXIT LOGIC
@@ -304,7 +308,7 @@ def on_ticks(ws, ticks):
                     position
                 )
 
-
+    
     dashboard.render(
         live_prices
     )
