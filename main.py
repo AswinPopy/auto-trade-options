@@ -157,10 +157,12 @@ def on_ticks(ws, ticks):
         if symbol is None:
             continue
 
+        live_prices[symbol] = price
+        
         if symbol not in UNDERLYING:
             continue
         
-        live_prices[symbol] = price
+        
 
         completed = (
             candle_engine.update_tick(
