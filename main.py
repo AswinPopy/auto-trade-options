@@ -158,6 +158,9 @@ def market_close_exit():
 # =====================================
 def on_ticks(ws, ticks):
 
+    global live_prices
+    global watchlist
+    
     if market_close_exit():
 
         print(
@@ -191,9 +194,6 @@ def on_ticks(ws, ticks):
         ws.close()
 
         return
-
-    global live_prices
-    global watchlist
 
     for tick in ticks:
 
