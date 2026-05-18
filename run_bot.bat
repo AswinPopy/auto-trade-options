@@ -1,5 +1,7 @@
 @echo off
 
+chcp 65001 > nul
+
 set PROJECT_DIR=C:\Users\aswin\Desktop\auto-trade-options
 
 set LOG_DIR=%PROJECT_DIR%\logs
