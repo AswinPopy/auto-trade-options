@@ -157,7 +157,7 @@ def on_ticks(ws, ticks):
         if symbol is None:
             continue
 
-        if symbol not in watchlist:
+        if symbol not in UNDERLYING:
             continue
         
         live_prices[symbol] = price

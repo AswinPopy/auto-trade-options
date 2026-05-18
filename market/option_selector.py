@@ -10,7 +10,7 @@ def get_atm_strike(
     price,
     option_type
 ):
-
+    print(f"About to get strike step for : {stock}")
     step = get_strike_step(
         stock
     )
