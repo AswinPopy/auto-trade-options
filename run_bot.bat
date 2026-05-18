@@ -1,6 +1,6 @@
 @echo off
 
-set PROJECT_DIR=C:\Users\aswin.m\Desktop\auto-trade-options
+set PROJECT_DIR=C:\Users\aswin\Desktop\auto-trade-options
 
 set LOG_DIR=%PROJECT_DIR%\logs
 
