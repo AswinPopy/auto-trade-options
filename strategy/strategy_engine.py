@@ -91,7 +91,7 @@ class StrategyEngine:
         )
 
         return (
-            body_strength >= 0.7
+            body_strength >= 0.63
         )
 
     # =====================================
