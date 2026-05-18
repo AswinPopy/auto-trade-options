@@ -1,3 +1,7 @@
+import sys
+sys.stdout.reconfigure(
+    encoding="utf-8"
+)
 import copy
 from utils.strike_steps import (
     get_strike_step
