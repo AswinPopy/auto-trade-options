@@ -28,7 +28,7 @@ class PaperBroker:
             + now.minute
         )
         # Do not buy after 02.30 PM
-        if current_min > (14*00 + 30):
+        if current_min > (13*60 + 30):
             return
         
         # already exists

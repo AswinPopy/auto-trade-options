@@ -14,6 +14,6 @@ set LOG_FILE=%LOG_DIR%\bot_%TIMESTAMP%.log
 
 cd /d "%PROJECT_DIR%"
 
-call venv\Scripts\activate
+call "%PROJECT_DIR%\venv\Scripts\activate.bat"
 
 python main.py >> "%LOG_FILE%" 2>&1

@@ -5,6 +5,7 @@ from utils.strike_steps import (
 from broker.kite_session import kite
 from config import UNDERLYING
 import logging
+from datetime import datetime
 from kiteconnect import (
     KiteTicker
 )
@@ -132,10 +133,64 @@ def get_symbol(token):
     )
 
 
+def market_close_exit():
+
+    now = datetime.now()
+
+    current_minutes = (
+        now.hour * 60
+        + now.minute
+    )
+
+    # 2:45 PM
+    exit_time = (
+        14 * 60
+        + 45
+    )
+
+    return (
+        current_minutes
+        >= exit_time
+    )
+
 # =====================================
 # TICKS
 # =====================================
 def on_ticks(ws, ticks):
+
+    if market_close_exit():
+
+        print(
+            "⛔ Market Closing..."
+        )
+
+        logging.info(
+            "MARKET CLOSE EXIT"
+        )
+
+        for position in list(
+            broker.positions.keys()
+        ):
+
+            current = live_prices.get(
+                position
+            )
+
+            if current is None:
+                continue
+
+            broker.sell(
+                position,
+                current
+            )
+
+        print(
+            "✅ All Positions Closed"
+        )
+
+        ws.close()
+
+        return
 
     global live_prices
     global watchlist
@@ -151,14 +206,14 @@ def on_ticks(ws, ticks):
         ]
 
         volume = tick['last_traded_quantity']
-        print("volume", volume)
+    
         symbol = get_symbol(token)
 
         if symbol is None:
             continue
 
         live_prices[symbol] = price
-        
+
         if symbol not in UNDERLYING:
             continue
         
