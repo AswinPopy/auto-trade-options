@@ -48,10 +48,18 @@ class ExitManager:
             f"{position} PnL = {pnl}"
         )
 
+        if pnl >= 4000:
+
+            print(
+                "🔴 HARD STOPLOSS HIT FOR PROFIT"
+            )
+
+            return True
+        
         # ==========================
         # HARD STOPLOSS
         # ==========================
-        if pnl <= -500:
+        if pnl <= -3500:
 
             print(
                 "🔴 HARD STOPLOSS HIT"
