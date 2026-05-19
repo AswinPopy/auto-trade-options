@@ -27,9 +27,8 @@ class ExitManager:
     def should_exit(
         self,
         position,
-        current_price,
-        live_prices
-    ):
+        current_price
+        ):
 
         entry = self.broker.positions[
             position
@@ -48,18 +47,23 @@ class ExitManager:
             f"{position} PnL = {pnl}"
         )
 
-        if pnl >= 4000:
+        # ==========================
+        # RISK SETTINGS
+        # ==========================
+        target = (
+            self.broker.capital
+            * 0.022
+        )
 
-            print(
-                "🔴 HARD STOPLOSS HIT FOR PROFIT"
-            )
+        stoploss = (
+            self.broker.capital
+            * 0.0125
+        )
 
-            return True
-        
         # ==========================
         # HARD STOPLOSS
         # ==========================
-        if pnl <= -3500:
+        if pnl <= -stoploss:
 
             print(
                 "🔴 HARD STOPLOSS HIT"
@@ -68,7 +72,7 @@ class ExitManager:
             return True
 
         # ==========================
-        # TRACK MAX PnL
+        # TRACK MAX PNL
         # ==========================
         if (
             position
@@ -86,43 +90,40 @@ class ExitManager:
             position
         ]
 
-        # ==========================
-        # TRAILING STOP
-        # ==========================
-        if max_seen >= 1000:
+      
+        if max_seen >= target:
+
+            trailing_buffer = (
+                target * 0.15
+            )
 
             trailing_level = (
-                max_seen - 500
+                max_seen
+                - trailing_buffer
+            )
+
+            print(
+                f"Trailing Level = "
+                f"{trailing_level}"
             )
 
             if pnl <= trailing_level:
+
                 print(
                     "🟠 TRAILING STOP HIT"
                 )
-                
+
                 return True
 
         # ==========================
-        # GET UNDERLYING STOCK
+        # GET UNDERLYING
         # ==========================
-        if "CE" in position:
-
-            underlying = (
-                position.split("CE")[0]
-            )
-
-        elif "PE" in position:
-
-            underlying = (
-                position.split("PE")[0]
-            )
-
-        else:
+        if "26MAY" not in position:
             return False
 
-        # remove expiry/strike noise
-        if "HDFCBANK" in underlying:
-            underlying = "HDFCBANK"
+        underlying = (
+            position.split("26MAY")[0]
+        )
 
         # ==========================
         # GET CANDLES
@@ -143,6 +144,10 @@ class ExitManager:
             for c in candles
         ]
 
+        current_stock_price = (
+            closes[-1]
+        )
+
         # ==========================
         # EMA
         # ==========================
@@ -151,18 +156,10 @@ class ExitManager:
             20
         )
 
-        if len(ema) < 2:
+        if len(ema) < 20:
             return False
 
-        ema_up = (
-            ema[-1]
-            > ema[-2]
-        )
-
-        ema_down = (
-            ema[-1]
-            < ema[-2]
-        )
+        current_ema = ema[-1]
 
         # ==========================
         # VWAP
@@ -171,8 +168,10 @@ class ExitManager:
             candles
         )
 
-        current_stock_price = (
-            closes[-1]
+
+        vwap_buffer = (
+            current_stock_price
+            * 0.0015
         )
 
         # =================================
@@ -180,10 +179,10 @@ class ExitManager:
         # =================================
         if "CE" in position:
 
-            # price below VWAP
+            # strong VWAP loss
             if (
                 current_stock_price
-                < vwap
+                < (vwap - vwap_buffer)
             ):
 
                 print(
@@ -192,11 +191,14 @@ class ExitManager:
 
                 return True
 
-            # EMA reversal
-            if ema_down:
+            # price below EMA
+            if (
+                current_stock_price
+                < current_ema
+            ):
 
                 print(
-                    "🔴 CE EXIT EMA DOWN"
+                    "🔴 CE EXIT BELOW EMA"
                 )
 
                 return True
@@ -206,10 +208,10 @@ class ExitManager:
         # =================================
         if "PE" in position:
 
-            # price above VWAP
+            # strong VWAP reclaim
             if (
                 current_stock_price
-                > vwap
+                > (vwap + vwap_buffer)
             ):
 
                 print(
@@ -218,16 +220,20 @@ class ExitManager:
 
                 return True
 
-            # EMA reversal
-            if ema_up:
+            # price above EMA
+            if (
+                current_stock_price
+                > current_ema
+            ):
 
                 print(
-                    "🔴 PE EXIT EMA UP"
+                    "🔴 PE EXIT ABOVE EMA"
                 )
 
                 return True
 
         return False
+
 
     # =====================================
     # CLEAR POSITION MEMORY
