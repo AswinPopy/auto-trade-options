@@ -167,7 +167,7 @@ def on_ticks(ws, ticks):
     
     if market_close_exit():
 
-        print(
+        logging.info(
             "⛔ Market Closing..."
         )
 
@@ -191,7 +191,7 @@ def on_ticks(ws, ticks):
                 current
             )
 
-        print(
+        logging.info(
             "✅ All Positions Closed"
         )
 
@@ -233,11 +233,11 @@ def on_ticks(ws, ticks):
 
         if completed:
 
-            print(
+            logging.info(
                 "\nCANDLE CLOSED"
             )
 
-            print(completed)
+            logging.info(completed)
 
             signal = (
                 strategy.generate_signal(
@@ -245,7 +245,7 @@ def on_ticks(ws, ticks):
                 )
             )
 
-            print(
+            logging.info(
                 f"SIGNAL = "
                 f"{signal}"
             )
@@ -260,7 +260,7 @@ def on_ticks(ws, ticks):
                 )
 
                 if ce_symbol not in watchlist:
-                    print(f"CE SYMBOL : {ce_symbol} not in watch list")
+                    logging.info(f"CE SYMBOL : {ce_symbol} not in watch list")
                     return
                 
                 ce_price = (
@@ -278,7 +278,7 @@ def on_ticks(ws, ticks):
                     
                     if broker.positions:
 
-                        print(
+                        logging.info(
                             "⛔ Existing Position Open"
                         )
 
@@ -300,7 +300,7 @@ def on_ticks(ws, ticks):
                 )
 
                 if pe_symbol not in watchlist:
-                    print(f"PE SYMBOL : {pe_symbol} not in watch list")
+                    logging.info(f"PE SYMBOL : {pe_symbol} not in watch list")
                     return
                 
                 pe_price = (
@@ -318,7 +318,7 @@ def on_ticks(ws, ticks):
 
                     if broker.positions:
 
-                        print(
+                        logging.info(
                             "⛔ Existing Position Open"
                         )
 
@@ -393,7 +393,7 @@ def on_connect(ws, response):
             stock_watchlist
         )
 
-    print("WATCH LIST", watchlist) 
+    logging.info("WATCH LIST", watchlist) 
 
     tokens = [
 
@@ -411,7 +411,7 @@ def on_connect(ws, response):
         tokens
     )
 
-    print("✅ Connected")
+    logging.info("✅ Connected")
 
 
 
@@ -471,7 +471,7 @@ kws.on_ticks = on_ticks
 
 kws.on_connect = on_connect
 
-print(
+logging.info(
     "🚀 Starting..."
 )
 
