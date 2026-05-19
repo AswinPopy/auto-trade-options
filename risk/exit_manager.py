@@ -88,11 +88,10 @@ class ExitManager:
             )
 
             if pnl <= trailing_level:
-
                 print(
                     "🟠 TRAILING STOP HIT"
                 )
-
+                
                 return True
 
         # ==========================
