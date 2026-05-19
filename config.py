@@ -19,10 +19,16 @@ GAP_THRESHOLD_PERCENT = 1.0
 UNDERLYING = [
                 'ADANIENT', 'ADANIPOWER', 'BHEL', 'NMDC', 'VEDL', 
                 'HDFCBANK', 'TMPV', 'BHARTIARTL', 'TECHM', 'YESBANK', 
-                'IDEA', 'CANBK', 'TATASTEEL',
+                'IDEA', 'CANBK', 'GAIL', 'LICI', 'ADANIGREEN'
                 'BSE', 'ADANIPORTS', 'AXISBANK', 'CHOLAFIN', 'ICICIBANK', 
                 'INDIGO', 'HINDUNILVR', 'MANAPPURAM', 'JSWSTEEL', 'CIPLA', 
-                'HAVELLS', 'KALYANKJIL', 'KOTAKBANK', 'BAJAJ-AUTO', 'BANKBARODA'
+                'HAVELLS', 'KALYANKJIL', 'KOTAKBANK', 'BAJAJ-AUTO', 'BANKBARODA',
+                'MARUTI', 'UNIONBANK', 'WIPRO', 'TVSMOTOR', 'TATASTEEL', 
+                'SBILIFE', 'RBLBANK', 'POLICYBZR', 'BRITANNIA', 'JINDALSTEL',
+                'IOC', 'ITC', 'DELHIVERY', 'COCHINSHIP', 'ADANIENSOL',
+                'PNB', 'PIDILITIND', 'JSWENERGY', 'ASHOKLEY', 'PAYTM',
+                'AMBUJACEM', 'ASIANPAINT', 'MOTILALOFS', 'RELIANCE', 'GODREJCP',
+                'TCS', 'DABUR', 'BOSCHLTD', 'MOTHERSON', 'SIEMENS', 'SWIGGY'
             ]
 
 UNDERLYING = list(set(UNDERLYING))

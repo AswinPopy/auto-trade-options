@@ -303,12 +303,12 @@ class StrategyEngine:
                 logging.info(f"Current price {symbol} : {current_price}")
                 logging.info(f"vwap : {vwap}")
                 print(
-                    "⛔ Price Below VWAP"
+                    f"⛔ {symbol} : Price Below VWAP"
                 )
                 return None
 
             print(
-                    "🟢 Price above VWAP : CE"
+                    f"🟢 {symbol} : Price above VWAP : CE"
                 )
             
             if not self.small_pullback(
@@ -316,13 +316,13 @@ class StrategyEngine:
                 trend
             ):
                 print(
-                    "⛔ No Pullback"
+                    f"⛔ {symbol} : No Pullback"
                 )
 
                 return None
 
             print(
-                    "🟢 Strong Pullback : CE"
+                    f"🟢 {symbol} : Strong Pullback : CE"
                 )
             
             if not self.weak_pullback_volume(
@@ -330,13 +330,13 @@ class StrategyEngine:
             ):
 
                 print(
-                    "⛔ Pullback Volume Strong"
+                    f"⛔ {symbol} :  Pullback Volume Strong"
                 )
 
                 return None
 
             print(
-                    "🟢 Pullback Volume Not Strong : CE"
+                    f"🟢 {symbol} : Pullback Volume Not Strong : CE"
                 )
             
             if not self.vwap_respected(
@@ -345,26 +345,26 @@ class StrategyEngine:
                 trend
             ):
                 print(
-                    "⛔ VWAP Not Respected"
+                    f"⛔ {symbol} : VWAP Not Respected"
                 )
 
                 return None
 
             print(
-                    "🟢 VWAP Respected : CE"
+                    f"🟢 {symbol} : VWAP Respected : CE"
                 )
             
             if not self.strong_candle(
                 candles[-1]
             ):
                 print(
-                    "⛔ Weak Green Candle"
+                    f"⛔ {symbol} : Weak Green Candle"
                 )
 
                 return None
 
             print(
-                    "🟢 Strong Green Candle : CE"
+                    f"🟢 {symbol} : Strong Green Candle : CE"
                 )
             
             if not self.volume_spike(
@@ -372,13 +372,13 @@ class StrategyEngine:
             ):
 
                 print(
-                    "⛔ No Volume Spike"
+                    f"⛔ {symbol} : No Volume Spike"
                 )
 
                 return None
 
             print(
-                    "🟢 Volume spike : CE"
+                    f"🟢 {symbol} : Volume spike : CE"
                 )
             
             if not self.breakout(
@@ -386,17 +386,17 @@ class StrategyEngine:
                 trend
             ):
                 print(
-                    "⛔ No Breakout"
+                    f"⛔ {symbol} No Breakout"
                 )
 
                 return None
             
             print(
-                    "🟢 Volume Breakout : CE"
+                    f"🟢 {symbol} : Volume Breakout : CE"
                 )
             
             print(
-                "🟢 BUY CE SIGNAL"
+                f"🟢 {symbol} : BUY CE SIGNAL"
             )
 
             return "BUY_CE"
@@ -408,13 +408,13 @@ class StrategyEngine:
 
             if current_price >= vwap:
                 print(
-                    "⛔ Price Above VWAP"
+                    f"⛔ {symbol} : Price Above VWAP"
                 )
 
                 return None
 
             print(
-                    "🟡 Price BELOW VWAP : PE"
+                    f"🟡 {symbol} : Price BELOW VWAP : PE"
                 )
             
             if not self.small_pullback(
@@ -422,20 +422,20 @@ class StrategyEngine:
                 trend
             ):
                 print(
-                    "⛔ No Pullback"
+                    f"⛔ {symbol} :  No Pullback"
                 )
 
                 return None
             
             print(
-                    "🟡 Strong Pullback : PE"
+                    f"🟡 {symbol} : Strong Pullback : PE"
                 )
 
             if not self.weak_pullback_volume(
                 candles
             ):
                 print(
-                    "⛔ Pullback Volume Strong"
+                    f"⛔ {symbol} : Pullback Volume Strong"
                 )
 
                 return None
@@ -446,39 +446,39 @@ class StrategyEngine:
                 trend
             ):
                 print(
-                    "⛔ VWAP Not Respected"
+                    f"⛔ {symbol} : VWAP Not Respected"
                 )
 
                 return None
 
             print(
-                    "🟡 VWAP Respected : PE"
+                    f"🟡 {symbol} : VWAP Respected : PE"
                 )
             
             if not self.strong_candle(
                 candles[-1]
             ):
                 print(
-                    "⛔ Weak Red Candle"
+                    f"⛔ {symbol} : Weak Red Candle"
                 )
 
                 return None
 
             print(
-                    "🟡 Strong RED Candle : PE"
+                    f"🟡 {symbol} : Strong RED Candle : PE"
                 )
             
             if not self.volume_spike(
                 candles[-5:]
             ):
                 print(
-                    "⛔ No Volume Spike"
+                    f"⛔ {symbol} : No Volume Spike"
                 )
 
                 return None
 
             print(
-                    "🟡 Volume spike : PE"
+                    f"🟡 {symbol} : Volume spike : PE"
                 )
             
             if not self.breakout(
@@ -486,17 +486,17 @@ class StrategyEngine:
                 trend
             ):
                 print(
-                    "⛔ No Breakdown"
+                    f"⛔ {symbol} : No Breakdown"
                 )
 
                 return None
             
             print(
-                    "🟡 Volume Breakout : PE"
+                    f"🟡 {symbol} : Volume Breakout : PE"
                 )
             
             print(
-                "🟡 BUY PE SIGNAL"
+                f"🟡 {symbol} BUY PE SIGNAL"
             )
 
             return "BUY_PE"
