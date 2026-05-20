@@ -408,7 +408,7 @@ def on_connect(ws, response):
             stock_watchlist
         )
 
-    logging.info("WATCH LIST", watchlist) 
+    print("WATCH LIST", watchlist) 
 
     tokens = [
 
@@ -426,7 +426,7 @@ def on_connect(ws, response):
         tokens
     )
 
-    logging.info("✅ Connected")
+    print("✅ Connected")
 
 
 
