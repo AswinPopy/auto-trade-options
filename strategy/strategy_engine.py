@@ -85,7 +85,7 @@ class StrategyEngine:
             / total_range
         )
 
-        logging.info(
+        print(
             f"Body Strength = "
             f"{body_strength}"
         )
@@ -112,12 +112,12 @@ class StrategyEngine:
             / (len(candles) - 1)
         )
 
-        logging.info(
+        print(
             f"Current Volume = "
             f"{current_volume}"
         )
 
-        logging.info(
+        print(
             f"Average Volume = "
             f"{avg_volume}"
         )
@@ -281,7 +281,7 @@ class StrategyEngine:
             candles
         )
 
-        logging.info(f"VWAP {symbol} = {vwap}")
+        print(f"VWAP {symbol} = {vwap}")
 
         # -------------------------
         # EMA TREND
@@ -289,9 +289,9 @@ class StrategyEngine:
         trend = self.ema_trend(
             closes
         )
-        logging.info(f"CURRENT TREND {symbol} : {trend}")
+        print(f"CURRENT TREND {symbol} : {trend}")
         if trend is None:
-            logging.info("RETURN : No trend")
+            print("RETURN : No trend")
             return None
 
         # =========================
@@ -300,14 +300,14 @@ class StrategyEngine:
         if trend == "UP":
 
             if current_price <= vwap:
-                logging.info(f"Current price {symbol} : {current_price}")
-                logging.info(f"vwap : {vwap}")
-                logging.info(
+                print(f"Current price {symbol} : {current_price}")
+                print(f"vwap : {vwap}")
+                print(
                     f"⛔ {symbol} : Price Below VWAP"
                 )
                 return None
 
-            logging.info(
+            print(
                     f"🟢 {symbol} : Price above VWAP : CE"
                 )
             
@@ -315,13 +315,13 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} : No Pullback"
                 )
 
                 return None
 
-            logging.info(
+            print(
                     f"🟢 {symbol} : Strong Pullback : CE"
                 )
             
@@ -329,13 +329,13 @@ class StrategyEngine:
             #     candles
             # ):
 
-            #     logging.info(
+            #     print(
             #         f"⛔ {symbol} :  Pullback Volume Strong"
             #     )
 
             #     return None
 
-            # logging.info(
+            # print(
             #         f"🟢 {symbol} : Pullback Volume Not Strong : CE"
             #     )
             
@@ -344,26 +344,26 @@ class StrategyEngine:
             #     vwap,
             #     trend
             # ):
-            #     logging.info(
+            #     print(
             #         f"⛔ {symbol} : VWAP Not Respected"
             #     )
 
             #     return None
 
-            # logging.info(
+            # print(
             #         f"🟢 {symbol} : VWAP Respected : CE"
             #     )
             
             if not self.strong_candle(
                 candles[-1]
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} : Weak Green Candle"
                 )
 
                 return None
 
-            logging.info(
+            print(
                     f"🟢 {symbol} : Strong Green Candle : CE"
                 )
             
@@ -371,13 +371,13 @@ class StrategyEngine:
                 candles[-5:]
             ):
 
-                logging.info(
+                print(
                     f"⛔ {symbol} : No Volume Spike"
                 )
 
                 return None
 
-            logging.info(
+            print(
                     f"🟢 {symbol} : Volume spike : CE"
                 )
             
@@ -385,17 +385,17 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} No Breakout"
                 )
 
                 return None
             
-            logging.info(
+            print(
                     f"🟢 {symbol} : Volume Breakout : CE"
                 )
             
-            logging.info(
+            print(
                 f"🟢 {symbol} : BUY CE SIGNAL"
             )
 
@@ -407,13 +407,13 @@ class StrategyEngine:
         if trend == "DOWN":
 
             if current_price >= vwap:
-                logging.info(
+                print(
                     f"⛔ {symbol} : Price Above VWAP"
                 )
 
                 return None
 
-            logging.info(
+            print(
                     f"🟡 {symbol} : Price BELOW VWAP : PE"
                 )
             
@@ -421,20 +421,20 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} :  No Pullback"
                 )
 
                 return None
             
-            logging.info(
+            print(
                     f"🟡 {symbol} : Strong Pullback : PE"
                 )
 
             # if not self.weak_pullback_volume(
             #     candles
             # ):
-            #     logging.info(
+            #     print(
             #         f"⛔ {symbol} : Pullback Volume Strong"
             #     )
 
@@ -445,39 +445,39 @@ class StrategyEngine:
             #     vwap,
             #     trend
             # ):
-            #     logging.info(
+            #     print(
             #         f"⛔ {symbol} : VWAP Not Respected"
             #     )
 
             #     return None
 
-            # logging.info(
+            # print(
             #         f"🟡 {symbol} : VWAP Respected : PE"
             #     )
             
             if not self.strong_candle(
                 candles[-1]
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} : Weak Red Candle"
                 )
 
                 return None
 
-            logging.info(
+            print(
                     f"🟡 {symbol} : Strong RED Candle : PE"
                 )
             
             if not self.volume_spike(
                 candles[-5:]
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} : No Volume Spike"
                 )
 
                 return None
 
-            logging.info(
+            print(
                     f"🟡 {symbol} : Volume spike : PE"
                 )
             
@@ -485,17 +485,17 @@ class StrategyEngine:
                 candles,
                 trend
             ):
-                logging.info(
+                print(
                     f"⛔ {symbol} : No Breakdown"
                 )
 
                 return None
             
-            logging.info(
+            print(
                     f"🟡 {symbol} : Volume Breakout : PE"
                 )
             
-            logging.info(
+            print(
                 f"🟡 {symbol} BUY PE SIGNAL"
             )
 

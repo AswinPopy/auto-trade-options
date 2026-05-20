@@ -172,11 +172,11 @@ def on_ticks(ws, ticks):
     
     if market_close_exit():
 
-        logging.info(
+        print(
             "⛔ Market Closing..."
         )
 
-        logging.info(
+        print(
             "MARKET CLOSE EXIT"
         )
 
@@ -196,7 +196,7 @@ def on_ticks(ws, ticks):
                 current
             )
 
-        logging.info(
+        print(
             "✅ All Positions Closed"
         )
 
@@ -238,11 +238,11 @@ def on_ticks(ws, ticks):
 
         if completed:
 
-            logging.info(
+            print(
                 "\nCANDLE CLOSED"
             )
 
-            logging.info(completed)
+            print(completed)
 
             signal = (
                 strategy.generate_signal(
@@ -250,7 +250,7 @@ def on_ticks(ws, ticks):
                 )
             )
 
-            logging.info(
+            print(
                 f"SIGNAL = "
                 f"{signal}"
             )
@@ -265,7 +265,7 @@ def on_ticks(ws, ticks):
                 )
 
                 if ce_symbol not in watchlist:
-                    logging.info(f"CE SYMBOL : {ce_symbol} not in watch list")
+                    print(f"CE SYMBOL : {ce_symbol} not in watch list")
                     return
                 
                 ce_price = (
@@ -283,12 +283,12 @@ def on_ticks(ws, ticks):
                     execution = qty_manager.estimate_buy_cost(ce_symbol, qty)
                     if broker.positions:
 
-                        logging.info(
+                        print(
                             "⛔ Existing Position Open"
                         )
 
                         return
-                    logging.info(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
+                    print(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
                     broker.buy(
                         ce_symbol,
                         execution["avg_price"],
@@ -305,7 +305,7 @@ def on_ticks(ws, ticks):
                 )
 
                 if pe_symbol not in watchlist:
-                    logging.info(f"PE SYMBOL : {pe_symbol} not in watch list")
+                    print(f"PE SYMBOL : {pe_symbol} not in watch list")
                     return
                 
                 pe_price = (
@@ -325,12 +325,12 @@ def on_ticks(ws, ticks):
 
                     if broker.positions:
 
-                        logging.info(
+                        print(
                             "⛔ Existing Position Open"
                         )
 
                         return
-                    logging.info(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
+                    print(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
                     broker.buy(
                         pe_symbol,
                         execution["avg_price"],
@@ -486,7 +486,7 @@ kws.on_ticks = on_ticks
 
 kws.on_connect = on_connect
 
-logging.info(
+print(
     "🚀 Starting..."
 )
 
