@@ -365,7 +365,7 @@ def on_ticks(ws, ticks):
                 execution = (
                     qty_manager
                     .estimate_sell_value(
-                    symbol,
+                    position,
                     qty
                     )
                     )
