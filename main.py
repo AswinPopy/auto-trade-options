@@ -357,7 +357,9 @@ def on_ticks(ws, ticks):
                     current
                 )
             )
-
+            qty = exit_manager.broker.quantity[
+            position
+        ]
             if should_exit:
                 
                 execution = (
