@@ -1,1 +1,1 @@
-Date,Time,Symbol,Entry,Exit,Quantity,PnL,Capital
+Date,Time,OrderId,Symbol,Entry,Exit,Quantity,PnL,Capital

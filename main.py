@@ -14,6 +14,10 @@ from kiteconnect import (
     KiteTicker
 )
 
+from broker.quantity_manager import(
+    QuantityManager
+)
+
 from risk.risk_manager import (
     RiskManager
 )
@@ -61,6 +65,7 @@ strategy = StrategyEngine(
 broker = PaperBroker(
 )
 
+qty_manager = QuantityManager()
 
 exit_manager = ExitManager(
     candle_engine,
@@ -275,7 +280,7 @@ def on_ticks(ws, ticks):
                         broker.capital,
                         ce_price
                     )
-                    
+                    execution = qty_manager.estimate_buy_cost(ce_symbol, qty)
                     if broker.positions:
 
                         logging.info(
@@ -286,8 +291,8 @@ def on_ticks(ws, ticks):
                     logging.info(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
                     broker.buy(
                         ce_symbol,
-                        ce_price,
-                        qty
+                        execution["avg_price"],
+                        execution["filled_qty"]
                     )
 
             # ==================
@@ -316,6 +321,8 @@ def on_ticks(ws, ticks):
                         pe_price
                     )
 
+                    execution = qty_manager.estimate_buy_cost(pe_symbol, qty)
+
                     if broker.positions:
 
                         logging.info(
@@ -326,8 +333,8 @@ def on_ticks(ws, ticks):
                     logging.info(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
                     broker.buy(
                         pe_symbol,
-                        pe_price,
-                        qty
+                        execution["avg_price"],
+                        execution["filled_qty"]
                     )
 
         # ==========================
@@ -353,10 +360,18 @@ def on_ticks(ws, ticks):
             )
 
             if should_exit:
-
+                
+                execution = (
+                    qty_manager
+                    .estimate_sell_value(
+                    symbol,
+                    qty
+                    )
+                    )
+                
                 broker.sell(
                     position,
-                    current
+                    execution["avg_price"]
                 )
 
                 exit_manager.clear_position(
