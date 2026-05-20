@@ -31,6 +31,7 @@ class TradeLogger:
 
     def log_trade(
         self,
+        order_id,
         symbol,
         entry,
         exit_price,
@@ -52,6 +53,7 @@ class TradeLogger:
             writer.writerow([
                 now.strftime("%Y-%m-%d"),
                 now.strftime("%H:%M:%S"),
+                order_id,
                 symbol,
                 entry,
                 exit_price,
