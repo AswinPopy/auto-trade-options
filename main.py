@@ -354,8 +354,7 @@ def on_ticks(ws, ticks):
             should_exit = (
                 exit_manager.should_exit(
                     position,
-                    current,
-                    live_prices
+                    current
                 )
             )
 
