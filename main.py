@@ -1,4 +1,14 @@
 import sys
+from data.shared import (
+live_prices
+)
+
+
+from data.queues import (
+    strategy_queue
+)
+
+
 sys.stdout.reconfigure(
     encoding="utf-8"
 )
@@ -8,22 +18,11 @@ from utils.strike_steps import (
 )
 from broker.kite_session import kite
 from config import UNDERLYING
-import logging
+
+
 from datetime import datetime
 from kiteconnect import (
     KiteTicker
-)
-
-from broker.quantity_manager import(
-    QuantityManager
-)
-
-from risk.risk_manager import (
-    RiskManager
-)
-
-from risk.exit_manager import (
-    ExitManager
 )
 
 from config import (
@@ -35,41 +34,36 @@ from data.candle_engine import (
     CandleEngine
 )
 
-from strategy.strategy_engine import (
-    StrategyEngine
-)
+import threading
 
 from broker.paper_broker import (
     PaperBroker
 )
 
 
-from market.option_selector import (
-    get_ce_symbol,
-    get_pe_symbol
+from strategy.workers import (
+    strategy_worker,
+    execution_worker
 )
+
+threading.Thread(
+target=strategy_worker,
+daemon=True
+).start()
+
+threading.Thread(
+target=execution_worker,
+daemon=True
+).start()
 
 # =====================================
 # INIT
 # =====================================
 
-risk_manager = RiskManager(
-)
-
-candle_engine = CandleEngine()
-
-strategy = StrategyEngine(
-    candle_engine
-)
-
-broker = PaperBroker(
-)
-
-qty_manager = QuantityManager()
-
-exit_manager = ExitManager(
-    candle_engine,
-    broker
+from data.shared import (
+live_prices,
+broker,
+candle_engine
 )
 
 
@@ -82,9 +76,6 @@ token_to_symbol = {}
 symbol_to_token = {}
 
 
-# =====================================
-# LOAD INSTRUMENTS
-# =====================================
 # =========================
 # NSE STOCKS
 # =========================
@@ -167,7 +158,6 @@ def market_close_exit():
 # =====================================
 def on_ticks(ws, ticks):
 
-    global live_prices
     global watchlist
     
     if market_close_exit():
@@ -226,8 +216,6 @@ def on_ticks(ws, ticks):
         if symbol not in UNDERLYING:
             continue
         
-        
-
         completed = (
             candle_engine.update_tick(
                 symbol,
@@ -237,148 +225,10 @@ def on_ticks(ws, ticks):
         )
 
         if completed:
+            
+            strategy_queue.put(symbol)
 
-            print(
-                "\nCANDLE CLOSED"
-            )
-
-            print(completed)
-
-            signal = (
-                strategy.generate_signal(
-                    symbol
-                )
-            )
-
-            print(
-                f"SIGNAL = "
-                f"{signal}"
-            )
-
-            # ==================
-            # BUY CALL
-            # ==================
-            if signal == "BUY_CE":
-
-                ce_symbol = (
-                    get_ce_symbol(symbol, price)
-                )
-
-                if ce_symbol not in watchlist:
-                    print(f"CE SYMBOL : {ce_symbol} not in watch list")
-                    return
-                
-                ce_price = (
-                    live_prices.get(
-                        ce_symbol
-                    )
-                )
-
-                if ce_price:
-
-                    qty = risk_manager.get_quantity(
-                        broker.capital,
-                        ce_price
-                    )
-                    execution = qty_manager.estimate_buy_cost(ce_symbol, qty)
-                    if broker.positions:
-
-                        print(
-                            "⛔ Existing Position Open"
-                        )
-
-                        return
-                    print(f"About to buy CE : {ce_symbol} for price : {ce_price} qty : {qty}")
-                    broker.buy(
-                        ce_symbol,
-                        execution["avg_price"],
-                        execution["filled_qty"]
-                    )
-
-            # ==================
-            # BUY PUT
-            # ==================
-            elif signal == "BUY_PE":
-
-                pe_symbol = (
-                    get_pe_symbol(symbol, price)
-                )
-
-                if pe_symbol not in watchlist:
-                    print(f"PE SYMBOL : {pe_symbol} not in watch list")
-                    return
-                
-                pe_price = (
-                    live_prices.get(
-                        pe_symbol
-                    )
-                )
-
-                if pe_price:
-
-                    qty = risk_manager.get_quantity(
-                        broker.capital,
-                        pe_price
-                    )
-
-                    execution = qty_manager.estimate_buy_cost(pe_symbol, qty)
-
-                    if broker.positions:
-
-                        print(
-                            "⛔ Existing Position Open"
-                        )
-
-                        return
-                    print(f"About to buy PE : {pe_symbol} for price : {pe_price} qty : {qty}")
-                    broker.buy(
-                        pe_symbol,
-                        execution["avg_price"],
-                        execution["filled_qty"]
-                    )
-
-        # ==========================
-        # EXIT LOGIC
-        # ==========================
-        for position in list(
-            broker.positions.keys()
-        ):
-
-            current = live_prices.get(
-                position
-            )
-
-            if current is None:
-                continue
-
-            should_exit = (
-                exit_manager.should_exit(
-                    position,
-                    current
-                )
-            )
-            qty = exit_manager.broker.quantity[
-            position
-        ]
-            if should_exit:
-                
-                execution = (
-                    qty_manager
-                    .estimate_sell_value(
-                    position,
-                    qty
-                    )
-                    )
-                
-                broker.sell(
-                    position,
-                    execution["avg_price"]
-                )
-
-                exit_manager.clear_position(
-                    position
-                )
-
+        
 
 def get_current_price(symbol):
 
