@@ -57,7 +57,7 @@ class ExitManager:
 
         stoploss = (
             self.broker.capital
-            * 0.0125
+            * 0.019
         )
 
         # ==========================
