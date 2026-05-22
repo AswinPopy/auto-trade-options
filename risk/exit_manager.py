@@ -52,12 +52,12 @@ class ExitManager:
         # ==========================
         target = (
             self.broker.capital
-            * 0.022
+            * 0.027
         )
 
         stoploss = (
             self.broker.capital
-            * 0.019
+            * 0.015
         )
 
         # ==========================
