@@ -285,7 +285,4 @@ class PaperBroker:
 
         del self.quantity[symbol]
 
-        if symbol in self.max_pnl:
-
-            del self.max_pnl[symbol]
     
