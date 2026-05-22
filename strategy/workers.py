@@ -20,9 +20,7 @@ from market.option_selector import (
 
 
 def strategy_worker():
-    print("STRATEGY WORKERE STARTED")
     while True:
-        print("Waiting for strategy item...")
         symbol = strategy_queue.get()
 
         try:
@@ -34,7 +32,6 @@ def strategy_worker():
             )
 
             if signal is None:
-                print("NO SIGNAL")
                 continue
 
             current_price = (
@@ -94,7 +91,6 @@ def strategy_worker():
             })
 
         finally:
-            print("strategy queue is done")
             strategy_queue.task_done()
 
 def execution_worker():

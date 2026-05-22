@@ -208,7 +208,6 @@ def on_ticks(ws, ticks):
         )
 
         if completed:
-            print("PUTTING TO STRATEGY QUEUE")
             strategy_queue.put(symbol)
 
         
