@@ -31,7 +31,7 @@ class PaperBroker:
         avg_price,
         qty
         ):
-
+        print(f"INSIDE BUY : {symbol}")
         now = datetime.now()
 
         current_min = (
@@ -46,7 +46,7 @@ class PaperBroker:
 
         # already exists
         if symbol in self.positions:
-
+            print(f"SYMBOL NOT IN POSITIONS BUY : {symbol}")
             return
 
         if self.live_trading:

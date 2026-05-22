@@ -1,24 +1,16 @@
 import sys
-from data.shared import (
-live_prices
-)
-
+import copy
+import threading
+from broker.kite_session import kite
+from config import UNDERLYING
 
 from data.queues import (
     strategy_queue
 )
 
-
-sys.stdout.reconfigure(
-    encoding="utf-8"
-)
-import copy
 from utils.strike_steps import (
     get_strike_step
 )
-from broker.kite_session import kite
-from config import UNDERLYING
-
 
 from datetime import datetime
 from kiteconnect import (
@@ -30,20 +22,13 @@ from config import (
     ACCESS_TOKEN
 )
 
-from data.candle_engine import (
-    CandleEngine
-)
-
-import threading
-
-from broker.paper_broker import (
-    PaperBroker
-)
-
-
 from strategy.workers import (
     strategy_worker,
     execution_worker
+)
+
+sys.stdout.reconfigure(
+    encoding="utf-8"
 )
 
 threading.Thread(
@@ -68,8 +53,6 @@ candle_engine
 
 
 watchlist = copy.deepcopy(UNDERLYING)
-
-live_prices = {}
 
 token_to_symbol = {}
 
