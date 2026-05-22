@@ -184,7 +184,7 @@ def on_ticks(ws, ticks):
         ]
 
         price = tick[
-            "last_price"
+            "last_price"    
         ]
 
         volume = tick['last_traded_quantity']
@@ -208,7 +208,7 @@ def on_ticks(ws, ticks):
         )
 
         if completed:
-            
+            print("PUTTING TO STRATEGY QUEUE")
             strategy_queue.put(symbol)
 
         

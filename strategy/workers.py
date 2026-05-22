@@ -20,9 +20,9 @@ from market.option_selector import (
 
 
 def strategy_worker():
-
+    print("STRATEGY WORKERE STARTED")
     while True:
-
+        print("Waiting for strategy item...")
         symbol = strategy_queue.get()
 
         try:
@@ -34,6 +34,7 @@ def strategy_worker():
             )
 
             if signal is None:
+                print("NO SIGNAL")
                 continue
 
             current_price = (
@@ -41,9 +42,11 @@ def strategy_worker():
             )
 
             if current_price is None:
+                print("CURRENT PRICE IS NONE")
                 continue
 
             if len(broker.positions) >= 1:
+                print("BROKER POSITION EXIST")
                 continue
 
             if signal == "BUY_CE":
@@ -65,8 +68,9 @@ def strategy_worker():
                 )
 
             else:
+                print("ELSE CONTINUE")
                 continue
-
+            print(f"OPTION SYM : {option_symbol}")
             option_price = (
                 live_prices.get(
                     option_symbol
@@ -74,6 +78,7 @@ def strategy_worker():
             )
 
             if option_price is None:
+                print("OPTION PRICE IS NONE")
                 continue
 
             qty = (
@@ -89,7 +94,7 @@ def strategy_worker():
             })
 
         finally:
-
+            print("strategy queue is done")
             strategy_queue.task_done()
 
 def execution_worker():
@@ -101,7 +106,7 @@ def execution_worker():
             )
 
             symbol = order["symbol"]
-
+            print(f"EXECUTION WORKER SYMBOL : {symbol}")
             qty = order["qty"]
 
             execution = (
@@ -111,7 +116,7 @@ def execution_worker():
                     qty
                 )
             )
-
+            print("EXECUTION WORKER BUY")
             broker.buy(
                 symbol,
                 execution["avg_price"],
