@@ -91,7 +91,7 @@ class StrategyEngine:
         )
 
         return (
-            body_strength >= 0.60
+            body_strength >= 0.65
         )
 
     # =====================================
@@ -124,7 +124,7 @@ class StrategyEngine:
 
         return (
             current_volume
-            > avg_volume * 1.5
+            > avg_volume * 4
         )
 
     # =====================================
@@ -325,15 +325,15 @@ class StrategyEngine:
                     f"🟢 {symbol} : Strong Pullback : CE"
                 )
             
-            # if not self.weak_pullback_volume(
-            #     candles
-            # ):
+            if not self.weak_pullback_volume(
+                candles
+            ):
 
-            #     print(
-            #         f"⛔ {symbol} :  Pullback Volume Strong"
-            #     )
+                print(
+                    f"⛔ {symbol} :  Pullback Volume Strong"
+                )
 
-            #     return None
+                return None
 
             # print(
             #         f"🟢 {symbol} : Pullback Volume Not Strong : CE"
@@ -431,14 +431,14 @@ class StrategyEngine:
                     f"🟡 {symbol} : Strong Pullback : PE"
                 )
 
-            # if not self.weak_pullback_volume(
-            #     candles
-            # ):
-            #     print(
-            #         f"⛔ {symbol} : Pullback Volume Strong"
-            #     )
+            if not self.weak_pullback_volume(
+                candles
+            ):
+                print(
+                    f"⛔ {symbol} : Pullback Volume Strong"
+                )
 
-            #     return None
+                return None
 
             # if not self.vwap_respected(
             #     candles[-2],
