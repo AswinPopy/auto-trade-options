@@ -138,22 +138,25 @@ class StrategyEngine:
         if trend == "UP":
 
             return (
-                c2["close"]
-                < c1["close"]
+                c2["close"] < c2["open"]
                 and
-                c3["close"]
-                > c2["close"]
+                abs(c2["close"] - c2["open"])
+                <
+                abs(c1["close"] - c1["open"])
+                and
+                c3["close"] > c3["open"]
             )
 
-        # PE pullback
         if trend == "DOWN":
 
             return (
-                c2["close"]
-                > c1["close"]
+                c2["close"] > c2["open"]
                 and
-                c3["close"]
-                < c2["close"]
+                abs(c2["close"] - c2["open"])
+                <
+                abs(c1["close"] - c1["open"])
+                and
+                c3["close"] < c3["open"]
             )
 
         return False
