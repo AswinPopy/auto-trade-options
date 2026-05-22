@@ -28,22 +28,13 @@ class StrategyEngine:
         if len(ema) < 5:
             return None
 
-        slope_percent = (
-            (
-                ema[-1]
-                - ema[-5]
-            )
-            /
-            ema[-5]
-        ) * 100
-
         current_price = closes[-1]
 
         current_ema = ema[-1]
 
         # bullish
         if (
-            slope_percent > 0.1
+            ema[-1] > ema[-3]
             and current_price > current_ema
         ):
 
@@ -51,7 +42,7 @@ class StrategyEngine:
 
         # bearish
         if (
-            slope_percent < -0.1
+            ema[-1] < ema[-3]
             and current_price < current_ema
         ):
 
@@ -325,15 +316,15 @@ class StrategyEngine:
                     f"🟢 {symbol} : Strong Pullback : CE"
                 )
             
-            if not self.weak_pullback_volume(
-                candles
-            ):
+            # if not self.weak_pullback_volume(
+            #     candles
+            # ):
 
-                print(
-                    f"⛔ {symbol} :  Pullback Volume Strong"
-                )
+            #     print(
+            #         f"⛔ {symbol} :  Pullback Volume Strong"
+            #     )
 
-                return None
+            #     return None
 
             # print(
             #         f"🟢 {symbol} : Pullback Volume Not Strong : CE"
@@ -431,14 +422,14 @@ class StrategyEngine:
                     f"🟡 {symbol} : Strong Pullback : PE"
                 )
 
-            if not self.weak_pullback_volume(
-                candles
-            ):
-                print(
-                    f"⛔ {symbol} : Pullback Volume Strong"
-                )
+            # if not self.weak_pullback_volume(
+            #     candles
+            # ):
+            #     print(
+            #         f"⛔ {symbol} : Pullback Volume Strong"
+            #     )
 
-                return None
+            #     return None
 
             # if not self.vwap_respected(
             #     candles[-2],
