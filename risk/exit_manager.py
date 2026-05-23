@@ -118,11 +118,11 @@ class ExitManager:
         # ==========================
         # GET UNDERLYING
         # ==========================
-        if "26MAY" not in position:
+        if "30JUN" not in position:
             return False
 
         underlying = (
-            position.split("26MAY")[0]
+            position.split("30JUN")[0]
         )
 
         # ==========================

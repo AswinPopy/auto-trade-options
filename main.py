@@ -289,7 +289,7 @@ def build_watchlist(
 
     watchlist = [stock]
 
-    expiry = "26MAY"
+    expiry = "30JUN"
 
     for strike in strikes:
 
