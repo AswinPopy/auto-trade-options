@@ -259,7 +259,7 @@ class StrategyEngine:
         )
 
         if len(candles) < 25:
-            return None
+            return None, None
 
         closes = [
             c["close"]
@@ -286,7 +286,7 @@ class StrategyEngine:
         print(f"CURRENT TREND {symbol} : {trend}")
         if trend is None:
             print("RETURN : No trend")
-            return None
+            return None, None
 
         # =========================
         # BUY CE CONDITIONS
@@ -299,7 +299,7 @@ class StrategyEngine:
                 print(
                     f"⛔ {symbol} : Price Below VWAP"
                 )
-                return None
+                return None, None
 
             print(
                     f"🟢 {symbol} : Price above VWAP : CE"
@@ -313,7 +313,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Pullback"
                 )
 
-                return None
+                return None, None
 
             print(
                     f"🟢 {symbol} : Strong Pullback : CE"
@@ -327,7 +327,7 @@ class StrategyEngine:
             #         f"⛔ {symbol} :  Pullback Volume Strong"
             #     )
 
-            #     return None
+            #     return None, None
 
             # print(
             #         f"🟢 {symbol} : Pullback Volume Not Strong : CE"
@@ -342,7 +342,7 @@ class StrategyEngine:
             #         f"⛔ {symbol} : VWAP Not Respected"
             #     )
 
-            #     return None
+            #     return None, None
 
             # print(
             #         f"🟢 {symbol} : VWAP Respected : CE"
@@ -355,7 +355,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : Weak Green Candle"
                 )
 
-                return None
+                return None, None
 
             print(
                     f"🟢 {symbol} : Strong Green Candle : CE"
@@ -369,7 +369,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Volume Spike"
                 )
 
-                return None
+                return None, None
 
             print(
                     f"🟢 {symbol} : Volume spike : CE"
@@ -383,7 +383,7 @@ class StrategyEngine:
                     f"⛔ {symbol} No Breakout"
                 )
 
-                return None
+                return None, None
             
             print(
                     f"🟢 {symbol} : Volume Breakout : CE"
@@ -393,7 +393,7 @@ class StrategyEngine:
                 f"🟢 {symbol} : BUY CE SIGNAL"
             )
 
-            return "BUY_CE"
+            return "BUY_CE", current_price
 
         # =========================
         # BUY PE CONDITIONS
@@ -405,7 +405,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : Price Above VWAP"
                 )
 
-                return None
+                return None, None
 
             print(
                     f"🟡 {symbol} : Price BELOW VWAP : PE"
@@ -419,7 +419,7 @@ class StrategyEngine:
                     f"⛔ {symbol} :  No Pullback"
                 )
 
-                return None
+                return None, None
             
             print(
                     f"🟡 {symbol} : Strong Pullback : PE"
@@ -432,7 +432,7 @@ class StrategyEngine:
             #         f"⛔ {symbol} : Pullback Volume Strong"
             #     )
 
-            #     return None
+            #     return None, None
 
             # if not self.vwap_respected(
             #     candles[-2],
@@ -443,7 +443,7 @@ class StrategyEngine:
             #         f"⛔ {symbol} : VWAP Not Respected"
             #     )
 
-            #     return None
+            #     return None, None
 
             # print(
             #         f"🟡 {symbol} : VWAP Respected : PE"
@@ -456,7 +456,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : Weak Red Candle"
                 )
 
-                return None
+                return None, None
 
             print(
                     f"🟡 {symbol} : Strong RED Candle : PE"
@@ -469,7 +469,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Volume Spike"
                 )
 
-                return None
+                return None, None
 
             print(
                     f"🟡 {symbol} : Volume spike : PE"
@@ -483,7 +483,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Breakdown"
                 )
 
-                return None
+                return None, None
             
             print(
                     f"🟡 {symbol} : Volume Breakout : PE"
@@ -493,6 +493,6 @@ class StrategyEngine:
                 f"🟡 {symbol} BUY PE SIGNAL"
             )
 
-            return "BUY_PE"
+            return "BUY_PE", current_price
 
-        return None
+        return None, None

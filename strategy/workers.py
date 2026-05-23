@@ -25,7 +25,7 @@ def strategy_worker():
 
         try:
 
-            signal = (
+            signal, checked_price = (
                 strategy.generate_signal(
                     symbol
                 )
@@ -37,6 +37,8 @@ def strategy_worker():
             current_price = (
                 live_prices.get(symbol)
             )
+
+            print(f"Checked price : {checked_price} || Current price : {current_price}")
 
             if current_price is None:
                 print("CURRENT PRICE IS NONE")
