@@ -25,7 +25,7 @@ def strategy_worker():
 
         try:
 
-            signal, checked_price = (
+            signal, details = (
                 strategy.generate_signal(
                     symbol
                 )
@@ -38,7 +38,7 @@ def strategy_worker():
                 live_prices.get(symbol)
             )
 
-            print(f"Checked price : {checked_price} || Current price : {current_price}")
+            print(f"Checked price : {details.get('current_price')} || Current price : {current_price}")
 
             if current_price is None:
                 print("CURRENT PRICE IS NONE")
@@ -89,7 +89,8 @@ def strategy_worker():
 
             execution_queue.put({
                 "symbol": option_symbol,
-                "qty": qty
+                "qty": qty,
+                "details": details
             })
 
         finally:
@@ -102,7 +103,7 @@ def execution_worker():
             order = execution_queue.get(
                 timeout=1
             )
-
+            details = order.get('details', {})
             symbol = order["symbol"]
             print(f"EXECUTION WORKER SYMBOL : {symbol}")
             qty = order["qty"]
@@ -118,7 +119,8 @@ def execution_worker():
             broker.buy(
                 symbol,
                 execution["avg_price"],
-                execution["filled_qty"]
+                execution["filled_qty"],
+                details
             )
 
             execution_queue.task_done()
@@ -161,12 +163,16 @@ def execution_worker():
                         qty
                     )
                 )
-
+                details = broker.trade_details.get(
+                    position,
+                    {}
+                )
                 broker.sell(
                     position,
-                    execution["avg_price"]
+                    execution["avg_price"],
+                    details
                 )
-
+                del broker.trade_details[position]
                 exit_manager.clear_position(
                     position
                 )

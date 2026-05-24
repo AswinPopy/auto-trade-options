@@ -28,10 +28,10 @@ class StrategyEngine:
         if len(ema) < 5:
             return None
 
-        current_price = closes[-1]
-
-        current_ema = ema[-1]
-
+        current_price = closes[-1] # 138.30
+ 
+        current_ema = ema[-1] # 139.45935774849838
+        # ema[-3] 139.68364755425978
         # bullish
         if (
             ema[-1] > ema[-3]
@@ -69,7 +69,7 @@ class StrategyEngine:
         )
 
         if total_range == 0:
-            return False
+            return False, 0
 
         body_strength = (
             body
@@ -82,7 +82,7 @@ class StrategyEngine:
         )
 
         return (
-            body_strength >= 0.65
+            body_strength >= 0.65, body_strength
         )
 
     # =====================================
@@ -245,6 +245,39 @@ class StrategyEngine:
 
         return False
 
+    def calculate_atr(
+        candles,
+        period=14
+    ):
+
+        if len(candles) < period + 1:
+            return None
+
+        trs = []
+
+        for i in range(1, len(candles)):
+
+            high = candles[i]["high"]
+
+            low = candles[i]["low"]
+
+            prev_close = candles[i - 1]["close"]
+
+            tr = max(
+                high - low,
+                abs(high - prev_close),
+                abs(low - prev_close)
+            )
+
+            trs.append(tr)
+
+        atr = (
+            sum(trs[-period:])
+            / period
+        )
+
+        return atr
+    
     # =====================================
     # MAIN STRATEGY
     # =====================================
@@ -252,22 +285,23 @@ class StrategyEngine:
         self,
         symbol
     ):
-
+        details = {}
         candles = self.reader.get_last(
             symbol,
             25
         )
-
-        if len(candles) < 25:
-            return None, None
-
+        
         closes = [
             c["close"]
             for c in candles
         ]
 
-        current_price = closes[-1]
+        if len(candles) < 25:
+            return None, None
 
+
+        current_price = closes[-1]
+        details['current_price'] = current_price
         # -------------------------
         # VWAP
         # -------------------------
@@ -276,7 +310,7 @@ class StrategyEngine:
         )
 
         print(f"VWAP {symbol} = {vwap}")
-
+        details['vwap'] = vwap
         # -------------------------
         # EMA TREND
         # -------------------------
@@ -286,8 +320,23 @@ class StrategyEngine:
         print(f"CURRENT TREND {symbol} : {trend}")
         if trend is None:
             print("RETURN : No trend")
-            return None, None
+            return None, details
 
+        atr = self.calculate_atr(
+            candles,
+            14
+        )
+
+        atr_percent = (
+            atr
+            / closes[-1]
+        ) * 100
+
+        details['atr_percent'] = atr_percent
+
+        if atr_percent < 0.25:
+            return None, details
+        
         # =========================
         # BUY CE CONDITIONS
         # =========================
@@ -299,7 +348,7 @@ class StrategyEngine:
                 print(
                     f"⛔ {symbol} : Price Below VWAP"
                 )
-                return None, None
+                return None, details
 
             print(
                     f"🟢 {symbol} : Price above VWAP : CE"
@@ -313,7 +362,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Pullback"
                 )
 
-                return None, None
+                return None, details
 
             print(
                     f"🟢 {symbol} : Strong Pullback : CE"
@@ -327,7 +376,7 @@ class StrategyEngine:
             #         f"⛔ {symbol} :  Pullback Volume Strong"
             #     )
 
-            #     return None, None
+            #     return None, details
 
             # print(
             #         f"🟢 {symbol} : Pullback Volume Not Strong : CE"
@@ -342,25 +391,25 @@ class StrategyEngine:
             #         f"⛔ {symbol} : VWAP Not Respected"
             #     )
 
-            #     return None, None
+            #     return None, details
 
             # print(
             #         f"🟢 {symbol} : VWAP Respected : CE"
             #     )
             
-            if not self.strong_candle(
-                candles[-1]
-            ):
+            candle_strong, candle_strength = self.strong_candle(candles[-1])
+            if not candle_strong:
                 print(
                     f"⛔ {symbol} : Weak Green Candle"
                 )
 
-                return None, None
+                return None, details
 
             print(
                     f"🟢 {symbol} : Strong Green Candle : CE"
                 )
             
+            details['candle_strength'] = candle_strength
             if not self.volume_spike(
                 candles[-5:]
             ):
@@ -369,7 +418,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Volume Spike"
                 )
 
-                return None, None
+                return None, details
 
             print(
                     f"🟢 {symbol} : Volume spike : CE"
@@ -383,7 +432,7 @@ class StrategyEngine:
                     f"⛔ {symbol} No Breakout"
                 )
 
-                return None, None
+                return None, details
             
             print(
                     f"🟢 {symbol} : Volume Breakout : CE"
@@ -393,7 +442,7 @@ class StrategyEngine:
                 f"🟢 {symbol} : BUY CE SIGNAL"
             )
 
-            return "BUY_CE", current_price
+            return "BUY_CE", details
 
         # =========================
         # BUY PE CONDITIONS
@@ -405,7 +454,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : Price Above VWAP"
                 )
 
-                return None, None
+                return None, details
 
             print(
                     f"🟡 {symbol} : Price BELOW VWAP : PE"
@@ -419,7 +468,7 @@ class StrategyEngine:
                     f"⛔ {symbol} :  No Pullback"
                 )
 
-                return None, None
+                return None, details
             
             print(
                     f"🟡 {symbol} : Strong Pullback : PE"
@@ -432,7 +481,7 @@ class StrategyEngine:
             #         f"⛔ {symbol} : Pullback Volume Strong"
             #     )
 
-            #     return None, None
+            #     return None, details
 
             # if not self.vwap_respected(
             #     candles[-2],
@@ -443,25 +492,25 @@ class StrategyEngine:
             #         f"⛔ {symbol} : VWAP Not Respected"
             #     )
 
-            #     return None, None
+            #     return None, details
 
             # print(
             #         f"🟡 {symbol} : VWAP Respected : PE"
             #     )
             
-            if not self.strong_candle(
-                candles[-1]
-            ):
+            candle_strong, candle_strength = self.strong_candle(candles[-1])
+            if not candle_strong:
                 print(
                     f"⛔ {symbol} : Weak Red Candle"
                 )
 
-                return None, None
+                return None, details
 
             print(
                     f"🟡 {symbol} : Strong RED Candle : PE"
                 )
-            
+            details['candle_strength'] = candle_strength
+
             if not self.volume_spike(
                 candles[-5:]
             ):
@@ -469,7 +518,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Volume Spike"
                 )
 
-                return None, None
+                return None, details
 
             print(
                     f"🟡 {symbol} : Volume spike : PE"
@@ -483,7 +532,7 @@ class StrategyEngine:
                     f"⛔ {symbol} : No Breakdown"
                 )
 
-                return None, None
+                return None, details
             
             print(
                     f"🟡 {symbol} : Volume Breakout : PE"
@@ -493,6 +542,6 @@ class StrategyEngine:
                 f"🟡 {symbol} BUY PE SIGNAL"
             )
 
-            return "BUY_PE", current_price
+            return "BUY_PE", details
 
         return None, None

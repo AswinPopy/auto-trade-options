@@ -36,7 +36,10 @@ class TradeLogger:
         entry,
         exit_price,
         qty,
-        pnl
+        pnl,
+        vwap,
+        atr,
+        strength
     ):
         prev_capital = self.get_last_capital()
         new_capital = prev_capital + pnl
@@ -59,7 +62,10 @@ class TradeLogger:
                 exit_price,
                 qty,
                 round(pnl, 2),
-                round(new_capital, 2)
+                round(new_capital, 2),
+                vwap,
+                atr,
+                strength
             ])
 
     def get_last_capital(self, default_capital=100000):

@@ -21,7 +21,8 @@ class PaperBroker:
         self.live_trading = False
 
         self.order_ids = {}
-
+        self.trade_details = {}
+        
     # =========================
     # BUY
     # =========================
@@ -29,7 +30,8 @@ class PaperBroker:
         self,
         symbol,
         avg_price,
-        qty
+        qty,
+        details
         ):
         print(f"INSIDE BUY : {symbol}")
         now = datetime.now()
@@ -49,6 +51,8 @@ class PaperBroker:
             print(f"SYMBOL NOT IN POSITIONS BUY : {symbol}")
             return
 
+        self.trade_details[symbol] = details
+        
         if self.live_trading:
 
             order_id = kite.place_order(
@@ -151,7 +155,8 @@ class PaperBroker:
     def sell(
         self,
         symbol,
-        price
+        price,
+        details
         ):
 
         order_id = None
@@ -257,7 +262,9 @@ class PaperBroker:
             (price - entry)
             * qty
         )
-
+        vwap = details.get('vwap')
+        atr = details.get('atr_percent')
+        strength = details.get('candle_strength')
         self.realized_pnl += pnl
 
         self.capital += pnl
@@ -268,7 +275,10 @@ class PaperBroker:
             entry,
             price,
             qty,
-            pnl
+            pnl,
+            vwap,
+            atr,
+            strength
         )
 
         print(
