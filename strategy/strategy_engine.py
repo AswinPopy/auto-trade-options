@@ -246,6 +246,7 @@ class StrategyEngine:
         return False
 
     def calculate_atr(
+        self,
         candles,
         period=14
     ):
