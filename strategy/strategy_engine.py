@@ -334,8 +334,8 @@ class StrategyEngine:
         ) * 100
 
         details['atr_percent'] = atr_percent
-
-        if atr_percent < 0.25:
+        print(f"ATR percent : {atr_percent}")
+        if atr_percent < 0.175:
             return None, details
         
         # =========================
