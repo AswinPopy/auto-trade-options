@@ -84,6 +84,27 @@ for i in nse_instruments:
 # NFO OPTIONS
 # =========================
 
+nfo_instruments = kite.instruments(
+    "NFO"
+)
+
+for i in nfo_instruments:
+
+    token = i["instrument_token"]
+
+    symbol = i["tradingsymbol"]
+    if not any(
+
+        symbol.startswith(stock)
+
+        for stock in watchlist
+    ):
+
+        continue
+        
+    token_to_symbol[token] = symbol
+    symbol_to_token[symbol] = token
+
 # =====================================
 # GET SYMBOL
 # =====================================
@@ -218,23 +239,6 @@ def on_connect(ws, response):
 
     print("WATCH LIST", watchlist) 
 
-    nfo_instruments = kite.instruments(
-    "NFO"
-)
-
-    for i in nfo_instruments:
-
-        token = i["instrument_token"]
-
-        symbol = i["tradingsymbol"]
-
-        if symbol not in watchlist:
-            continue
-        
-        token_to_symbol[token] = symbol
-
-        symbol_to_token[symbol] = token
-
     tokens = [
 
         symbol_to_token[s]
@@ -286,7 +290,7 @@ def build_watchlist(
 
     watchlist = [stock]
 
-    expiry = "30JUN"
+    expiry = "26JUN"
 
     for strike in strikes:
 
