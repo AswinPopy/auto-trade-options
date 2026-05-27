@@ -78,6 +78,8 @@ def strategy_worker():
 
             if option_price is None:
                 print("OPTION PRICE IS NONE")
+                print("Option symbol in live prices", option_symbol in live_prices)
+                print("Live prices", live_prices.keys())
                 continue
 
             qty = (

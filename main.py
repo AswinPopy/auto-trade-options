@@ -83,28 +83,6 @@ for i in nse_instruments:
 # =========================
 # NFO OPTIONS
 # =========================
-nfo_instruments = kite.instruments(
-    "NFO"
-)
-
-for i in nfo_instruments:
-
-    token = i["instrument_token"]
-
-    symbol = i["tradingsymbol"]
-
-    if not any(
-
-        symbol.startswith(stock)
-
-        for stock in UNDERLYING
-    ):
-
-        continue
-    
-    token_to_symbol[token] = symbol
-
-    symbol_to_token[symbol] = token
 
 # =====================================
 # GET SYMBOL
@@ -182,22 +160,19 @@ def on_ticks(ws, ticks):
         token = tick[
             "instrument_token"
         ]
+        
+        symbol = get_symbol(token)
 
         price = tick[
             "last_price"    
         ]
 
-        volume = tick['last_traded_quantity']
-    
-        symbol = get_symbol(token)
-
-        if symbol is None:
-            continue
-
         live_prices[symbol] = price
 
-        if symbol not in UNDERLYING:
+        if symbol is None or symbol not in UNDERLYING:
             continue
+
+        volume = tick['last_traded_quantity']
         
         completed = (
             candle_engine.update_tick(
@@ -243,6 +218,23 @@ def on_connect(ws, response):
 
     print("WATCH LIST", watchlist) 
 
+    nfo_instruments = kite.instruments(
+    "NFO"
+)
+
+    for i in nfo_instruments:
+
+        token = i["instrument_token"]
+
+        symbol = i["tradingsymbol"]
+
+        if symbol not in watchlist:
+            continue
+        
+        token_to_symbol[token] = symbol
+
+        symbol_to_token[symbol] = token
+
     tokens = [
 
         symbol_to_token[s]
@@ -251,6 +243,11 @@ def on_connect(ws, response):
 
         if s in symbol_to_token
     ]
+
+    print("SUBSCRIBED SYMBOLS")
+
+    for t in tokens:
+        print(token_to_symbol[t])
 
     ws.subscribe(tokens)
 
