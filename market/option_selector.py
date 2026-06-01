@@ -3,7 +3,7 @@ from utils.strike_steps import (
 )
 import math
 
-EXPIRY = "30JUN"
+EXPIRY = "26JUN"
 
 def get_atm_strike(
     stock,

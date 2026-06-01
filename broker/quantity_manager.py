@@ -123,5 +123,5 @@ class QuantityManager:
         }
     
 if __name__ == "__main__":
-    symbol = "YESBANK30JUN22CE"
+    symbol = "YESBANK26JUN22CE"
     print("total cost : ", QuantityManager().estimate_buy_cost(symbol, 122000))
