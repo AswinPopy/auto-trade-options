@@ -18,11 +18,24 @@ from market.option_selector import (
     get_pe_symbol
 )
 
+import time
+
+def monitor():
+
+    while True:
+
+        print(
+            "Strategy:",
+            strategy_queue.qsize(),
+            "Execution:",
+            execution_queue.qsize()
+        )
+
+        time.sleep(10)
 
 def strategy_worker():
     while True:
         symbol = strategy_queue.get()
-
         try:
 
             signal, details = (
@@ -45,7 +58,7 @@ def strategy_worker():
                 continue
 
             if len(broker.positions) >= 1:
-                print("BROKER POSITION EXIST")
+                print("BROKER POSITION FULL")
                 continue
 
             if signal == "BUY_CE":

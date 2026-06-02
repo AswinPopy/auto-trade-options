@@ -24,12 +24,18 @@ from config import (
 
 from strategy.workers import (
     strategy_worker,
-    execution_worker
+    execution_worker,
+    monitor
 )
 
 sys.stdout.reconfigure(
     encoding="utf-8"
 )
+
+threading.Thread(
+    target=monitor,
+    daemon=True
+).start()
 
 threading.Thread(
 target=strategy_worker,
