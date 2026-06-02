@@ -1,4 +1,4 @@
-import logging
+from datetime import datetime
 
 from strategy.indicators import (
     calculate_ema,
@@ -75,7 +75,7 @@ class StrategyEngine:
             body
             / total_range
         )
-
+        print(datetime.now())
         print(
             f"Body Strength = "
             f"{body_strength}"
@@ -102,7 +102,6 @@ class StrategyEngine:
             )
             / (len(candles) - 1)
         )
-
         print(
             f"Current Volume = "
             f"{current_volume}"
@@ -115,7 +114,7 @@ class StrategyEngine:
 
         return (
             current_volume
-            > avg_volume * 4
+            > avg_volume * 1.5
         )
 
     # =====================================
@@ -309,7 +308,7 @@ class StrategyEngine:
         vwap = calculate_vwap(
             candles
         )
-
+        print(datetime.now())
         print(f"VWAP {symbol} = {vwap}")
         details['vwap'] = vwap
         # -------------------------
