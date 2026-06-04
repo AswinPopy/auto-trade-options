@@ -103,6 +103,7 @@ def strategy_worker():
             )
 
             execution_queue.put({
+                "underlying": symbol,
                 "symbol": option_symbol,
                 "qty": qty,
                 "price": option_price,
@@ -119,6 +120,11 @@ def execution_worker():
             order = execution_queue.get(
                 timeout=1
             )
+            underlying = order["underlying"]
+            if underlying in broker.already_traded:
+                print(f"Already traded {underlying}, skipping order")
+                execution_queue.task_done()
+                continue
             symbol = order["symbol"]
             print(f"EXECUTION WORKER SYMBOL : {symbol}")
             qty = order["qty"]
@@ -133,6 +139,7 @@ def execution_worker():
             # )
             print("EXECUTION WORKER BUY")
             broker.buy(
+                underlying,
                 symbol,
                 price,
                 qty,

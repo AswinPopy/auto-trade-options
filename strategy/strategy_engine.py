@@ -82,7 +82,7 @@ class StrategyEngine:
         )
 
         return (
-            body_strength >= 0.65, body_strength
+            body_strength >= 0.80, body_strength
         )
 
     # =====================================
@@ -334,7 +334,7 @@ class StrategyEngine:
 
         details['atr_percent'] = atr_percent
         print(f"ATR percent : {atr_percent}")
-        if atr_percent < 0.185:
+        if atr_percent < 0.2:
             return None, details
         
         # =========================
