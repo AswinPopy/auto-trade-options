@@ -287,11 +287,13 @@ def build_watchlist(
     ))
 
     strikes = [
+        atm - (3 * step),
         atm - (2 * step),
         atm - step,
         atm,
         atm + step,
-        atm + (2 * step)
+        atm + (2 * step),
+        atm + (3 * step),
     ]
 
     watchlist = [stock]

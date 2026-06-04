@@ -42,7 +42,7 @@ class ExitManager:
             (current_price - entry)
             * qty
         )
-
+        print(f"Current price cal pnl = {current_price} -- {entry} -- {qty}")
         print(
             f"{position} PnL = {pnl}"
         )
