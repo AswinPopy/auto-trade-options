@@ -114,7 +114,7 @@ class StrategyEngine:
 
         return (
             current_volume
-            > avg_volume * 1.5
+            > avg_volume * 2
         )
 
     # =====================================
@@ -334,7 +334,7 @@ class StrategyEngine:
 
         details['atr_percent'] = atr_percent
         print(f"ATR percent : {atr_percent}")
-        if atr_percent < 0.175:
+        if atr_percent < 0.185:
             return None, details
         
         # =========================

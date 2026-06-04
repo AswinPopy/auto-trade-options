@@ -105,6 +105,7 @@ def strategy_worker():
             execution_queue.put({
                 "symbol": option_symbol,
                 "qty": qty,
+                "price": option_price,
                 "details": details
             })
 
@@ -118,23 +119,23 @@ def execution_worker():
             order = execution_queue.get(
                 timeout=1
             )
-            details = order.get('details', {})
             symbol = order["symbol"]
             print(f"EXECUTION WORKER SYMBOL : {symbol}")
             qty = order["qty"]
-
-            execution = (
-                qty_manager
-                .estimate_buy_cost(
-                    symbol,
-                    qty
-                )
-            )
+            price = order["price"]
+            details = order["details"]
+            # execution = (
+            #     qty_manager
+            #     .estimate_buy_cost(
+            #         symbol,
+            #         qty
+            #     )
+            # )
             print("EXECUTION WORKER BUY")
             broker.buy(
                 symbol,
-                execution["avg_price"],
-                execution["filled_qty"],
+                price,
+                qty,
                 details
             )
 
@@ -171,20 +172,20 @@ def execution_worker():
 
             if should_exit:
 
-                execution = (
-                    qty_manager
-                    .estimate_sell_value(
-                        position,
-                        qty
-                    )
-                )
+                # execution = (
+                #     qty_manager
+                #     .estimate_sell_value(
+                #         position,
+                #         qty
+                #     )
+                # )
                 details = broker.trade_details.get(
                     position,
                     {}
                 )
                 broker.sell(
                     position,
-                    execution["avg_price"],
+                    current,
                     details
                 )
                 del broker.trade_details[position]
