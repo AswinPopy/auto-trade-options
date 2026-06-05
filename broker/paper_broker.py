@@ -22,12 +22,14 @@ class PaperBroker:
 
         self.order_ids = {}
         self.trade_details = {}
-        
+        self.already_traded = set()
+
     # =========================
     # BUY
     # =========================
     def buy(
         self,
+        underlying,
         symbol,
         avg_price,
         qty,
@@ -52,6 +54,7 @@ class PaperBroker:
             return
 
         self.trade_details[symbol] = details
+        self.already_traded.add(underlying)
         
         if self.live_trading:
 
