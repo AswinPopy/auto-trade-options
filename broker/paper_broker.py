@@ -268,6 +268,7 @@ class PaperBroker:
         vwap = details.get('vwap')
         atr = details.get('atr_percent')
         strength = details.get('candle_strength')
+        atr_ratio = details.get('atr_ratio')
         self.realized_pnl += pnl
 
         self.capital += pnl

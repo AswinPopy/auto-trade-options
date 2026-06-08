@@ -39,7 +39,8 @@ class TradeLogger:
         pnl,
         vwap,
         atr,
-        strength
+        strength,
+        atr_ratio
     ):
         prev_capital = self.get_last_capital()
         new_capital = prev_capital + pnl
@@ -65,7 +66,8 @@ class TradeLogger:
                 round(new_capital, 2),
                 vwap,
                 atr,
-                strength
+                strength,
+                atr_ratio
             ])
 
     def get_last_capital(self, default_capital=100000):

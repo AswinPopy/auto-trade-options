@@ -387,7 +387,8 @@ class StrategyEngine:
         atr_percent = (
             current_atr / current_price
         ) * 100
-
+        
+        details['atr_ratio'] = atr_ratio
         details['atr_percent'] = atr_percent
 
         if atr_percent < 0.11:
