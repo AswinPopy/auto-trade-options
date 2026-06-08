@@ -323,7 +323,7 @@ class StrategyEngine:
         details = {}
         candles = self.reader.get_last(
             symbol,
-            50
+            35
         )
         
         closes = [
@@ -389,7 +389,7 @@ class StrategyEngine:
         ) * 100
 
         details['atr_percent'] = atr_percent
-        
+
         if atr_percent < 0.11:
             print(f"⛔ {symbol} : ATR Percent {atr_percent:.2f}% below threshold")
             return None, details
