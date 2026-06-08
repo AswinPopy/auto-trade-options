@@ -361,7 +361,11 @@ class StrategyEngine:
             candles,
             atr_period=14
         )
-
+        
+        if not atr_values:
+            print(f"⛔ {symbol} : Not enough data for ATR")
+            return None, details    
+        
         current_atr = atr_values[-1]
 
         atr_20_period_average = (
