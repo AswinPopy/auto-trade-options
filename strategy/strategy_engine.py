@@ -278,6 +278,41 @@ class StrategyEngine:
 
         return atr
     
+    def calculate_atr_series(
+        self,
+        candles,
+        atr_period=14
+    ):
+        if len(candles) < atr_period + 20:
+            return []
+
+        trs = []
+
+        for i in range(1, len(candles)):
+            high = candles[i]["high"]
+            low = candles[i]["low"]
+            prev_close = candles[i - 1]["close"]
+
+            tr = max(
+                high - low,
+                abs(high - prev_close),
+                abs(low - prev_close)
+            )
+
+            trs.append(tr)
+
+        atr_values = []
+
+        for i in range(atr_period - 1, len(trs)):
+            atr = (
+                sum(trs[i - atr_period + 1:i + 1])
+                / atr_period
+            )
+
+            atr_values.append(atr)
+
+        return atr_values
+    
     # =====================================
     # MAIN STRATEGY
     # =====================================
@@ -322,21 +357,27 @@ class StrategyEngine:
             print("RETURN : No trend")
             return None, details
 
-        atr = self.calculate_atr(
+        atr_values = self.calculate_atr_series(
             candles,
-            14
+            atr_period=14
         )
 
-        atr_percent = (
-            atr
-            / closes[-1]
-        ) * 100
+        current_atr = atr_values[-1]
 
-        details['atr_percent'] = atr_percent
-        print(f"ATR percent : {atr_percent}")
-        if atr_percent < 0.2:
-            return None, details
+        atr_20_period_average = (
+            sum(atr_values[-20:])
+            / 20
+        )
+
+        volatility_expanding = (
+            current_atr >
+            atr_20_period_average
+        )
         
+        if not volatility_expanding:
+            print(f"⛔ {symbol} : Volatility Not Expanding")
+            return None, details
+
         # =========================
         # BUY CE CONDITIONS
         # =========================
