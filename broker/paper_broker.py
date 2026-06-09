@@ -135,8 +135,14 @@ class PaperBroker:
             filled_qty = latest["filled_quantity"]
 
             self.quantity[symbol] = (
-            filled_qty
+                filled_qty
             )
+
+            buy_cost = (
+                actual_avg_price
+                * filled_qty
+            )
+            self.capital -= buy_cost
 
         else:
             self.positions[symbol] = (
@@ -144,6 +150,12 @@ class PaperBroker:
             )
 
             self.quantity[symbol] = qty
+
+            buy_cost = (
+                avg_price
+                * qty
+            )
+            self.capital -= buy_cost
 
         print(
             f"🟢 BOUGHT "
@@ -269,11 +281,15 @@ class PaperBroker:
         atr = details.get('atr_percent')
         strength = details.get('candle_strength')
         atr_ratio = details.get('atr_ratio')
-        self.realized_pnl += pnl
-        volume_ratio=details.get('volume_ratio')
+        volume_ratio = details.get('volume_ratio')
 
-        self.capital += pnl
-        
+        proceeds = (
+            price
+            * qty
+        )
+        self.capital += proceeds
+        self.realized_pnl += pnl
+
         self.logger.log_trade(
             order_id,
             symbol,
@@ -281,12 +297,13 @@ class PaperBroker:
             price,
             qty,
             pnl,
+            self.capital,
             vwap,
             atr,
             strength,
             atr_ratio,
             volume_ratio,
-            )
+        )
 
         print(
             f"🔴 SOLD "

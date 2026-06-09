@@ -13,6 +13,8 @@ qty_manager,
 exit_manager
 )
 
+from config import MAX_CONCURRENT_TRADES
+
 from market.option_selector import (
     get_ce_symbol,
     get_pe_symbol
@@ -57,7 +59,7 @@ def strategy_worker():
                 print("CURRENT PRICE IS NONE")
                 continue
 
-            if len(broker.positions) >= 1:
+            if len(broker.positions) >= MAX_CONCURRENT_TRADES:
                 print("BROKER POSITION FULL")
                 continue
 

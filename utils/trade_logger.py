@@ -22,11 +22,18 @@ class TradeLogger:
                 writer.writerow([
                     "Date",
                     "Time",
+                    "Order ID",
                     "Symbol",
                     "Entry",
                     "Exit",
                     "Quantity",
-                    "PnL"
+                    "PnL",
+                    "Capital",
+                    "VWAP",
+                    "ATR",
+                    "Strength",
+                    "ATR Ratio",
+                    "Volume Ratio"
                 ])
 
     def log_trade(
@@ -37,15 +44,13 @@ class TradeLogger:
         exit_price,
         qty,
         pnl,
+        capital,
         vwap,
         atr,
         strength,
         atr_ratio,
         volume_ratio
     ):
-        prev_capital = self.get_last_capital()
-        new_capital = prev_capital + pnl
-
         now = datetime.now()
         with open(
             self.file,
@@ -64,7 +69,7 @@ class TradeLogger:
                 exit_price,
                 qty,
                 round(pnl, 2),
-                round(new_capital, 2),
+                round(capital, 2),
                 vwap,
                 atr,
                 strength,
