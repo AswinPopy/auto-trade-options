@@ -112,11 +112,16 @@ class StrategyEngine:
             f"{avg_volume}"
         )
 
+        # return (
+        #     current_volume
+        #     > avg_volume * 2
+        # )
+
         return (
             current_volume
-            > avg_volume * 2
+            / avg_volume
         )
-
+    
     # =====================================
     # SMALL PULLBACK
     # =====================================
@@ -387,7 +392,7 @@ class StrategyEngine:
         atr_percent = (
             current_atr / current_price
         ) * 100
-        
+
         details['atr_ratio'] = atr_ratio
         details['atr_percent'] = atr_percent
 
@@ -469,6 +474,8 @@ class StrategyEngine:
                 )
             
             details['candle_strength'] = candle_strength
+            details['volume_ratio'] = self.volume_spike(
+                candles[-5:])
             # if not self.volume_spike(
             #     candles[-5:]
             # ):
@@ -569,6 +576,9 @@ class StrategyEngine:
                     f"🟡 {symbol} : Strong RED Candle : PE"
                 )
             details['candle_strength'] = candle_strength
+            details['volume_ratio'] = self.volume_spike(
+                candles[-5:]
+            )
 
             # if not self.volume_spike(
             #     candles[-5:]

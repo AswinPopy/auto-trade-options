@@ -270,6 +270,7 @@ class PaperBroker:
         strength = details.get('candle_strength')
         atr_ratio = details.get('atr_ratio')
         self.realized_pnl += pnl
+        volume_ratio=details.get('volume_ratio')
 
         self.capital += pnl
         
@@ -282,8 +283,10 @@ class PaperBroker:
             pnl,
             vwap,
             atr,
-            strength
-        )
+            strength,
+            atr_ratio,
+            volume_ratio,
+            )
 
         print(
             f"🔴 SOLD "

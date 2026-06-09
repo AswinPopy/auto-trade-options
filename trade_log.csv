@@ -1,2 +1,2 @@
-Date,Time,OrderId,Symbol,Entry,Exit,Quantity,PnL,Capital,vwap,atr,strength,atr_ratio
+Date,Time,OrderId,Symbol,Entry,Exit,Quantity,PnL,Capital,vwap,atr,strength,atr_ratio,volume_ratio
 

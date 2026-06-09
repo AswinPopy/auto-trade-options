@@ -40,7 +40,8 @@ class TradeLogger:
         vwap,
         atr,
         strength,
-        atr_ratio
+        atr_ratio,
+        volume_ratio
     ):
         prev_capital = self.get_last_capital()
         new_capital = prev_capital + pnl
@@ -67,7 +68,8 @@ class TradeLogger:
                 vwap,
                 atr,
                 strength,
-                atr_ratio
+                atr_ratio,
+                volume_ratio
             ])
 
     def get_last_capital(self, default_capital=100000):
