@@ -288,7 +288,8 @@ class StrategyEngine:
         candles,
         atr_period=14
     ):
-        if len(candles) < atr_period + 20:
+        min_required = atr_period + 20
+        if len(candles) < min_required:
             return []
 
         trs = []
@@ -306,14 +307,17 @@ class StrategyEngine:
 
             trs.append(tr)
 
+        # Seed with SMA for first value
         atr_values = []
+        initial_atr = sum(trs[:atr_period]) / atr_period
+        atr_values.append(initial_atr)
 
-        for i in range(atr_period - 1, len(trs)):
+        # Wilder's RMA smoothing for the rest
+        for i in range(atr_period, len(trs)):
             atr = (
-                sum(trs[i - atr_period + 1:i + 1])
+                (atr_values[-1] * (atr_period - 1) + trs[i])
                 / atr_period
             )
-
             atr_values.append(atr)
 
         return atr_values
@@ -369,8 +373,8 @@ class StrategyEngine:
 
         if not atr_values:
             print(f"⛔ {symbol} : Not enough data for ATR")
-            return None, details    
-        
+            return None, details
+
         current_atr = atr_values[-1]
 
         atr_20_period_average = (
@@ -385,10 +389,12 @@ class StrategyEngine:
             current_atr
             / atr_20_period_average
         )
-        if atr_ratio < 1.5:
-            print(f"⛔ {symbol} : ATR Ratio {atr_ratio:.2f} below threshold")
+
+        # Added upper cap to avoid chaotic/news-driven moves
+        if atr_ratio < 1.5 or atr_ratio > 4.0:
+            print(f"⛔ {symbol} : ATR Ratio {atr_ratio:.2f} out of range")
             return None, details
-        
+
         atr_percent = (
             current_atr / current_price
         ) * 100
