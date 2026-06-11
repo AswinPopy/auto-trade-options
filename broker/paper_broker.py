@@ -294,11 +294,11 @@ class PaperBroker:
             * qty
         )
         vwap = details.get('vwap')
-        atr = details.get('atr_percent')
+        atr_percent = details.get('atr_percent')
         strength = details.get('candle_strength')
         atr_ratio = details.get('atr_ratio')
         volume_ratio = details.get('volume_ratio')
-
+        distance_from_vwap = details.get('distance_from_vwap')
         proceeds = (
             price
             * qty
@@ -315,10 +315,11 @@ class PaperBroker:
             pnl,
             self.capital,
             vwap,
-            atr,
+            atr_percent,
             strength,
             atr_ratio,
             volume_ratio,
+            distance_from_vwap
         )
 
         print(

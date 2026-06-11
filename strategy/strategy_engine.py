@@ -369,8 +369,10 @@ class StrategyEngine:
         # if atr_percent < 0.11:
         #     print(f"⛔ {symbol} : ATR Percent {atr_percent:.2f}% below threshold")
         #     return None, details
-        
 
+        close = candles[-1]["close"]
+        distance_from_vwap = abs(close - vwap) / vwap * 100
+        details['distance_from_vwap'] = distance_from_vwap
         # =========================
         # BUY CE CONDITIONS
         # =========================
