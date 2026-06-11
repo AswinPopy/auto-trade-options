@@ -2,6 +2,8 @@ import csv
 import os
 from datetime import datetime
 
+from config import CAPITAL
+
 class TradeLogger:
 
     def __init__(self):
@@ -77,7 +79,7 @@ class TradeLogger:
                 volume_ratio
             ])
 
-    def get_last_capital(self, default_capital=100000):
+    def get_last_capital(self, default_capital=CAPITAL):
         if not os.path.exists(self.file):
             return default_capital
 
@@ -86,7 +88,16 @@ class TradeLogger:
         with open(self.file, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if row.get("Capital"):
-                    last_capital = float(row["Capital"])
+                capital_value = row.get("Capital")
+                if not capital_value:
+                    continue
+
+                try:
+                    capital_float = float(capital_value)
+                except ValueError:
+                    continue
+
+                if capital_float > 0:
+                    last_capital = capital_float
 
         return last_capital

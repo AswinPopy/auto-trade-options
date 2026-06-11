@@ -142,6 +142,14 @@ class PaperBroker:
                 actual_avg_price
                 * filled_qty
             )
+
+            if buy_cost > self.capital:
+                print(
+                    f"⚠️ INSUFFICIENT CAPITAL FOR {symbol}: "
+                    f"need {buy_cost:.2f}, have {self.capital:.2f}"
+                )
+                return
+
             self.capital -= buy_cost
 
         else:
@@ -155,6 +163,14 @@ class PaperBroker:
                 avg_price
                 * qty
             )
+
+            if buy_cost > self.capital:
+                print(
+                    f"⚠️ INSUFFICIENT CAPITAL FOR {symbol}: "
+                    f"need {buy_cost:.2f}, have {self.capital:.2f}"
+                )
+                return
+
             self.capital -= buy_cost
 
         print(
