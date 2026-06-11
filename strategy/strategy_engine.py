@@ -249,39 +249,6 @@ class StrategyEngine:
 
         return False
 
-    def calculate_atr(
-        self,
-        candles,
-        period=14
-    ):
-
-        if len(candles) < period + 1:
-            return None
-
-        trs = []
-
-        for i in range(1, len(candles)):
-
-            high = candles[i]["high"]
-
-            low = candles[i]["low"]
-
-            prev_close = candles[i - 1]["close"]
-
-            tr = max(
-                high - low,
-                abs(high - prev_close),
-                abs(low - prev_close)
-            )
-
-            trs.append(tr)
-
-        atr = (
-            sum(trs[-period:])
-            / period
-        )
-
-        return atr
     
     def calculate_atr_series(
         self,
@@ -332,15 +299,12 @@ class StrategyEngine:
         details = {}
         candles = self.reader.get_last(
             symbol,
-            35
+            60
         )
         
-        closes = [
-            c["close"]
-            for c in candles
-        ]
+        closes = [c["close"] for c in candles[-25:]]
 
-        if len(candles) < 25:
+        if len(candles) < 60:
             return None, None
 
 
@@ -391,20 +355,20 @@ class StrategyEngine:
         )
 
         # Added upper cap to avoid chaotic/news-driven moves
-        if atr_ratio < 1.5 or atr_ratio > 4.0:
-            print(f"⛔ {symbol} : ATR Ratio {atr_ratio:.2f} out of range")
-            return None, details
+        # if atr_ratio < 1.5 or atr_ratio > 4.0:
+        #     print(f"⛔ {symbol} : ATR Ratio {atr_ratio:.2f} out of range")
+        #     return None, details
 
-        atr_percent = (
-            current_atr / current_price
-        ) * 100
+        # atr_percent = (
+        #     current_atr / current_price
+        # ) * 100
 
         details['atr_ratio'] = atr_ratio
-        details['atr_percent'] = atr_percent
+        #details['atr_percent'] = atr_percent
 
-        if atr_percent < 0.11:
-            print(f"⛔ {symbol} : ATR Percent {atr_percent:.2f}% below threshold")
-            return None, details
+        # if atr_percent < 0.11:
+        #     print(f"⛔ {symbol} : ATR Percent {atr_percent:.2f}% below threshold")
+        #     return None, details
         
 
         # =========================
@@ -424,48 +388,34 @@ class StrategyEngine:
                     f"🟢 {symbol} : Price above VWAP : CE"
                 )
             
-            # if not self.small_pullback(
-            #     candles,
-            #     trend
-            # ):
-            #     print(
-            #         f"⛔ {symbol} : No Pullback"
-            #     )
+            if not self.small_pullback(
+                candles,
+                trend
+            ):
+                print(
+                    f"⛔ {symbol} : No Pullback"
+                )
 
-            #     return None, details
+                return None, details
 
-            # print(
-            #         f"🟢 {symbol} : Strong Pullback : CE"
-            #     )
+            print(
+                    f"🟢 {symbol} : Strong Pullback : CE"
+                )
             
-            # if not self.weak_pullback_volume(
-            #     candles
-            # ):
+            if not self.weak_pullback_volume(
+                candles
+            ):
 
-            #     print(
-            #         f"⛔ {symbol} :  Pullback Volume Strong"
-            #     )
+                print(
+                    f"⛔ {symbol} :  Pullback Volume Strong"
+                )
 
-            #     return None, details
+                return None, details
 
-            # print(
-            #         f"🟢 {symbol} : Pullback Volume Not Strong : CE"
-            #     )
+            print(
+                    f"🟢 {symbol} : Pullback Volume Not Strong : CE"
+                )
             
-            # if not self.vwap_respected(
-            #     candles[-2],
-            #     vwap,
-            #     trend
-            # ):
-            #     print(
-            #         f"⛔ {symbol} : VWAP Not Respected"
-            #     )
-
-            #     return None, details
-
-            # print(
-            #         f"🟢 {symbol} : VWAP Respected : CE"
-            #     )
             
             candle_strong, candle_strength = self.strong_candle(candles[-1])
             if not candle_strong:
@@ -480,21 +430,22 @@ class StrategyEngine:
                 )
             
             details['candle_strength'] = candle_strength
-            details['volume_ratio'] = self.volume_spike(
-                candles[-5:])
-            # if not self.volume_spike(
-            #     candles[-5:]
-            # ):
+            volume_ratio = self.volume_spike(
+                candles[-5:]
+            )
+            details['volume_ratio'] = volume_ratio
+            
+            if volume_ratio < 2.0:
 
-            #     print(
-            #         f"⛔ {symbol} : No Volume Spike"
-            #     )
+                print(
+                    f"⛔ {symbol} : No Volume Spike"
+                )
 
-            #     return None, details
+                return None, details
 
-            # print(
-            #         f"🟢 {symbol} : Volume spike : CE"
-            #     )
+            print(
+                    f"🟢 {symbol} : Volume spike : CE"
+                )
             
             if not self.breakout(
                 candles,
@@ -532,28 +483,28 @@ class StrategyEngine:
                     f"🟡 {symbol} : Price BELOW VWAP : PE"
                 )
             
-            # if not self.small_pullback(
-            #     candles,
-            #     trend
-            # ):
-            #     print(
-            #         f"⛔ {symbol} :  No Pullback"
-            #     )
+            if not self.small_pullback(
+                candles,
+                trend
+            ):
+                print(
+                    f"⛔ {symbol} :  No Pullback"
+                )
 
-            #     return None, details
+                return None, details
             
-            # print(
-            #         f"🟡 {symbol} : Strong Pullback : PE"
-            #     )
+            print(
+                    f"🟡 {symbol} : Strong Pullback : PE"
+                )
 
-            # if not self.weak_pullback_volume(
-            #     candles
-            # ):
-            #     print(
-            #         f"⛔ {symbol} : Pullback Volume Strong"
-            #     )
+            if not self.weak_pullback_volume(
+                candles
+            ):
+                print(
+                    f"⛔ {symbol} : Pullback Volume Strong"
+                )
 
-            #     return None, details
+                return None, details
 
             # if not self.vwap_respected(
             #     candles[-2],
@@ -582,22 +533,22 @@ class StrategyEngine:
                     f"🟡 {symbol} : Strong RED Candle : PE"
                 )
             details['candle_strength'] = candle_strength
-            details['volume_ratio'] = self.volume_spike(
+            volume_ratio = self.volume_spike(
                 candles[-5:]
             )
+            details['volume_ratio'] = volume_ratio
+            
+            if volume_ratio < 2.0:
 
-            # if not self.volume_spike(
-            #     candles[-5:]
-            # ):
-            #     print(
-            #         f"⛔ {symbol} : No Volume Spike"
-            #     )
+                print(
+                    f"⛔ {symbol} : No Volume Spike"
+                )
 
-            #     return None, details
+                return None, details
 
-            # print(
-            #         f"🟡 {symbol} : Volume spike : PE"
-            #     )
+            print(
+                    f"🟢 {symbol} : Volume spike : CE"
+                )
             
             if not self.breakout(
                 candles,

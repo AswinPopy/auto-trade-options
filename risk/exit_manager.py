@@ -132,11 +132,11 @@ class ExitManager:
             self.candle_engine
             .get_last(
                 underlying,
-                25
+                60
             )
         )
 
-        if len(candles) < 25:
+        if len(candles) < 60:
             return False
 
         closes = [
@@ -147,6 +147,10 @@ class ExitManager:
         current_stock_price = (
             closes[-1]
         )
+
+        atr = self.calculate_atr(candles)
+        if atr is None:
+            return False
 
         # ==========================
         # EMA
@@ -179,6 +183,34 @@ class ExitManager:
         # =================================
         if "CE" in position:
 
+            # ATR-based stop loss / target for CE
+            ce_stop_loss = (
+                current_price
+                - (1.5 * atr)
+            )
+            ce_target = (
+                current_price
+                + (2.0 * atr)
+            )
+
+            if current_price <= ce_stop_loss:
+
+                print(
+                    "🔴 CE ATR STOP LOSS HIT",
+                    f"level={ce_stop_loss:.2f}"
+                )
+
+                return True
+
+            if current_price >= ce_target:
+
+                print(
+                    "🟢 CE ATR TARGET HIT",
+                    f"level={ce_target:.2f}"
+                )
+
+                return True
+
             # strong VWAP loss
             if (
                 current_stock_price
@@ -208,6 +240,34 @@ class ExitManager:
         # =================================
         if "PE" in position:
 
+            # ATR-based stop loss / target for PE
+            pe_stop_loss = (
+                current_price
+                + (1.5 * atr)
+            )
+            pe_target = (
+                current_price
+                - (2.0 * atr)
+            )
+
+            if current_price >= pe_stop_loss:
+
+                print(
+                    "🔴 PE ATR STOP LOSS HIT",
+                    f"level={pe_stop_loss:.2f}"
+                )
+
+                return True
+
+            if current_price <= pe_target:
+
+                print(
+                    "🟢 PE ATR TARGET HIT",
+                    f"level={pe_target:.2f}"
+                )
+
+                return True
+
             # strong VWAP reclaim
             if (
                 current_stock_price
@@ -233,6 +293,41 @@ class ExitManager:
                 return True
 
         return False
+
+    def calculate_atr(
+    self,
+    candles,
+    period=14
+):
+        if len(candles) < period + 1:
+            return None
+
+        trs = []
+
+        for i in range(1, len(candles)):
+            high = candles[i]["high"]
+            low = candles[i]["low"]
+            prev_close = candles[i - 1]["close"]
+
+            tr = max(
+                high - low,
+                abs(high - prev_close),
+                abs(low - prev_close)
+            )
+
+            trs.append(tr)
+
+        # Seed with SMA of first 14 TRs
+        atr = sum(trs[:period]) / period
+
+        # Wilder's smoothing for remaining TRs
+        for tr in trs[period:]:
+            atr = (
+                (atr * (period - 1) + tr)
+                / period
+            )
+
+        return atr
 
 
     # =====================================
