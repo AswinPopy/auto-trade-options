@@ -355,16 +355,16 @@ class StrategyEngine:
         )
 
         # Added upper cap to avoid chaotic/news-driven moves
-        # if atr_ratio < 1.5 or atr_ratio > 4.0:
-        #     print(f"⛔ {symbol} : ATR Ratio {atr_ratio:.2f} out of range")
-        #     return None, details
+        if atr_ratio < 1.1 or atr_ratio > 4.0:
+            print(f"⛔ {symbol} : ATR Ratio {atr_ratio:.2f} out of range")
+            return None, details
 
-        # atr_percent = (
-        #     current_atr / current_price
-        # ) * 100
+        atr_percent = (
+            current_atr / current_price
+        ) * 100
 
         details['atr_ratio'] = atr_ratio
-        #details['atr_percent'] = atr_percent
+        details['atr_percent'] = atr_percent
 
         # if atr_percent < 0.11:
         #     print(f"⛔ {symbol} : ATR Percent {atr_percent:.2f}% below threshold")
