@@ -1,4 +1,5 @@
 from queue import Empty
+import traceback
 from data.queues import (
 strategy_queue,
 execution_queue
@@ -90,7 +91,7 @@ def strategy_worker():
                     option_symbol
                 )
             )
-
+            print(f"OPTION PRICE : {option_price}")
             if option_price is None:
                 print("OPTION PRICE IS NONE")
                 print("Option symbol in live prices", option_symbol in live_prices)
@@ -103,7 +104,7 @@ def strategy_worker():
                     option_price
                 )
             )
-
+            print("About to add to execution queue with details:", details)
             execution_queue.put({
                 "underlying": symbol,
                 "symbol": option_symbol,
@@ -111,7 +112,9 @@ def strategy_worker():
                 "price": option_price,
                 "details": details
             })
-
+        except Exception as e:
+            print(f"Error in strategy worker for {symbol} : {e}")
+            traceback.print_exc()
         finally:
             strategy_queue.task_done()
 
@@ -119,6 +122,7 @@ def execution_worker():
 
     while True:
         try:
+            print("Waiting for execution order...")
             order = execution_queue.get(
                 timeout=1
             )
