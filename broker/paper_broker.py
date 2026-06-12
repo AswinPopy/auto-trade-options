@@ -193,7 +193,7 @@ class PaperBroker:
         order_id = None
 
         if symbol not in self.positions:
-
+            print(f"SYMBOL NOT IN POSITIONS SELL : {symbol}")
             return
 
         entry = self.positions[symbol]
@@ -305,7 +305,7 @@ class PaperBroker:
         )
         self.capital += proceeds
         self.realized_pnl += pnl
-
+        print("About to log trade with details:", details)
         self.logger.log_trade(
             order_id,
             symbol,

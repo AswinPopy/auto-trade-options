@@ -1,6 +1,7 @@
 import csv
 import os
 from datetime import datetime
+import traceback
 
 from config import CAPITAL
 
@@ -51,33 +52,39 @@ class TradeLogger:
         atr,
         strength,
         atr_ratio,
-        volume_ratio
+        volume_ratio,
+        distance_from_vwap
     ):
-        now = datetime.now()
-        with open(
-            self.file,
-            "a",
-            newline=""
-        ) as f:
+        try:
+            now = datetime.now()
+            with open(
+                self.file,
+                "a",
+                newline=""
+            ) as f:
 
-            writer = csv.writer(f)
+                writer = csv.writer(f)
 
-            writer.writerow([
-                now.strftime("%Y-%m-%d"),
-                now.strftime("%H:%M:%S"),
-                order_id,
-                symbol,
-                entry,
-                exit_price,
-                qty,
-                round(pnl, 2),
-                round(capital, 2),
-                vwap,
-                atr,
-                strength,
-                atr_ratio,
-                volume_ratio
-            ])
+                writer.writerow([
+                    now.strftime("%Y-%m-%d"),
+                    now.strftime("%H:%M:%S"),
+                    order_id,
+                    symbol,
+                    entry,
+                    exit_price,
+                    qty,
+                    round(pnl, 2),
+                    round(capital, 2),
+                    vwap,
+                    atr,
+                    strength,
+                    atr_ratio,
+                    volume_ratio,
+                    distance_from_vwap
+                ])
+        except Exception as e:
+            print(f"Error logging trade: {e}")
+            print(traceback.format_exc())   
 
     def get_last_capital(self, default_capital=CAPITAL):
         if not os.path.exists(self.file):
