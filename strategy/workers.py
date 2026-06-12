@@ -105,6 +105,7 @@ def strategy_worker():
                 )
             )
             print("About to add to execution queue with details:", details)
+            details["underlying_entry"] = current_price
             execution_queue.put({
                 "underlying": symbol,
                 "symbol": option_symbol,
@@ -174,8 +175,7 @@ def execution_worker():
 
             should_exit = (
                 exit_manager.should_exit(
-                    position,
-                    current
+                    position
                 )
             )
 
