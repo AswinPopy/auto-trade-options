@@ -189,7 +189,7 @@ class PaperBroker:
         price,
         details
         ):
-
+        print("About to sell trade", details)
         order_id = None
 
         if symbol not in self.positions:

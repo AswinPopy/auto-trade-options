@@ -25,118 +25,38 @@ class ExitManager:
     # MAIN EXIT CHECK
     # =====================================
     def should_exit(
-        self,
-        position,
-        current_price
-        ):
+    self,
+    position
+    ):
+        """
+        Exit based purely on underlying ATR movement.
+        """
 
-        entry = self.broker.positions[
-            position
-        ]
-
-        qty = self.broker.quantity[
-            position
-        ]
-
-        pnl = (
-            (current_price - entry)
-            * qty
-        )
-        print(f"Current price cal pnl = {current_price} -- {entry} -- {qty}")
-        print(
-            f"{position} PnL = {pnl}"
+        details = self.broker.trade_details.get(
+            position,
+            {}
         )
 
-        # ==========================
-        # RISK SETTINGS
-        # ==========================
-        target = (
-            self.broker.capital
-            * 0.050
+        underlying = details.get(
+            "underlying"
         )
 
-        stoploss = (
-            self.broker.capital
-            * 0.025
+        entry_underlying = details.get(
+            "underlying_entry"
         )
 
-        # ==========================
-        # HARD STOPLOSS
-        # ==========================
-        if pnl <= -stoploss:
-
-            print(
-                "🔴 HARD STOPLOSS HIT"
-            )
-
-            return True
-
-        # ==========================
-        # TRACK MAX PNL
-        # ==========================
         if (
-            position
-            not in self.max_pnl
+            underlying is None
+            or entry_underlying is None
         ):
-
-            self.max_pnl[position] = pnl
-
-        self.max_pnl[position] = max(
-            self.max_pnl[position],
-            pnl
-        )
-
-        max_seen = self.max_pnl[
-            position
-        ]
-
-      
-        if max_seen >= target:
-
-            trailing_buffer = (
-                target * 0.15
-            )
-
-            trailing_level = (
-                max_seen
-                - trailing_buffer
-            )
-
-            print(
-                f"Trailing Level = "
-                f"{trailing_level}"
-            )
-
-            if pnl <= trailing_level:
-
-                print(
-                    "🟠 TRAILING STOP HIT"
-                )
-
-                return True
-
-        # ==========================
-        # GET UNDERLYING
-        # ==========================
-        if "26JUN" not in position:
             return False
 
-        underlying = (
-            position.split("26JUN")[0]
+        candles = self.candle_engine.get_last(
+            underlying,
+            25
         )
 
-        # ==========================
-        # GET CANDLES
-        # ==========================
-        candles = (
-            self.candle_engine
-            .get_last(
-                underlying,
-                60
-            )
-        )
-
-        if len(candles) < 60:
+        if len(candles) < 25:
             return False
 
         closes = [
@@ -144,150 +64,91 @@ class ExitManager:
             for c in candles
         ]
 
-        current_stock_price = (
-            closes[-1]
+        current_underlying = closes[-1]
+
+        atr = self.calculate_atr(
+            candles[-20:]
         )
 
-        atr = self.calculate_atr(candles)
         if atr is None:
             return False
 
-        # ==========================
-        # EMA
-        # ==========================
-        ema = calculate_ema(
-            closes,
-            20
-        )
-
-        if len(ema) < 20:
-            return False
-
-        current_ema = ema[-1]
-
-        # ==========================
-        # VWAP
-        # ==========================
-        vwap = calculate_vwap(
-            candles
-        )
-
-
-        vwap_buffer = (
-            current_stock_price
-            * 0.0015
-        )
-
-        # =================================
-        # CE EXIT CONDITIONS
-        # =================================
+        # ==================================
+        # CALL OPTION
+        # ==================================
+        print("ATR Exit Check: {atr} | Current Underlying={current} | Entry Underlying={entry}")
         if "CE" in position:
 
-            # ATR-based stop loss / target for CE
-            ce_stop_loss = (
-                current_price
+            stop_level = (
+                entry_underlying
                 - (1.5 * atr)
             )
-            ce_target = (
-                current_price
+
+            target_level = (
+                entry_underlying
                 + (2.0 * atr)
             )
 
-            if current_price <= ce_stop_loss:
+            print(
+                f"CE | Entry={entry_underlying}"
+                f" Current={current_underlying}"
+                f" ATR={atr}"
+                f" SL={stop_level}"
+                f" TG={target_level}"
+            )
+
+            if current_underlying <= stop_level:
 
                 print(
-                    "🔴 CE ATR STOP LOSS HIT",
-                    f"level={ce_stop_loss:.2f}"
+                    "🔴 CE ATR STOPLOSS HIT"
                 )
 
                 return True
 
-            if current_price >= ce_target:
+            if current_underlying >= target_level:
 
                 print(
-                    "🟢 CE ATR TARGET HIT",
-                    f"level={ce_target:.2f}"
+                    "🟢 CE ATR TARGET HIT"
                 )
 
                 return True
 
-            # strong VWAP loss
-            if (
-                current_stock_price
-                < (vwap - vwap_buffer)
-            ):
+        # ==================================
+        # PUT OPTION
+        # ==================================
 
-                print(
-                    "🔴 CE EXIT BELOW VWAP"
-                )
+        elif "PE" in position:
 
-                return True
-
-            # price below EMA
-            if (
-                current_stock_price
-                < current_ema
-            ):
-
-                print(
-                    "🔴 CE EXIT BELOW EMA"
-                )
-
-                return True
-
-        # =================================
-        # PE EXIT CONDITIONS
-        # =================================
-        if "PE" in position:
-
-            # ATR-based stop loss / target for PE
-            pe_stop_loss = (
-                current_price
+            stop_level = (
+                entry_underlying
                 + (1.5 * atr)
             )
-            pe_target = (
-                current_price
+
+            target_level = (
+                entry_underlying
                 - (2.0 * atr)
             )
 
-            if current_price >= pe_stop_loss:
+            print(
+                f"PE | Entry={entry_underlying}"
+                f" Current={current_underlying}"
+                f" ATR={atr}"
+                f" SL={stop_level}"
+                f" TG={target_level}"
+            )
+
+            if current_underlying >= stop_level:
 
                 print(
-                    "🔴 PE ATR STOP LOSS HIT",
-                    f"level={pe_stop_loss:.2f}"
+                    "🔴 PE ATR STOPLOSS HIT"
                 )
 
                 return True
 
-            if current_price <= pe_target:
+            if current_underlying <= target_level:
 
                 print(
-                    "🟢 PE ATR TARGET HIT",
-                    f"level={pe_target:.2f}"
-                )
-
-                return True
-
-            # strong VWAP reclaim
-            if (
-                current_stock_price
-                > (vwap + vwap_buffer)
-            ):
-
-                print(
-                    "🔴 PE EXIT ABOVE VWAP"
-                )
-
-                return True
-
-            # price above EMA
-            if (
-                current_stock_price
-                > current_ema
-            ):
-
-                print(
-                    "🔴 PE EXIT ABOVE EMA"
+                    "🟢 PE ATR TARGET HIT"
                 )
 
                 return True
