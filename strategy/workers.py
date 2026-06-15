@@ -164,12 +164,13 @@ def execution_worker():
         for position in list(
             broker.positions.keys()
         ):
-
+            print(f"Checking exit for {position}")
             current = live_prices.get(
                 position
             )
 
             if current is None:
+                print(f"Current price for {position} is None, skipping exit check")
                 continue
 
             should_exit = (
@@ -184,7 +185,7 @@ def execution_worker():
             ]
 
             if should_exit:
-
+                print(f"EXITING {position} at price {current}")
                 # execution = (
                 #     qty_manager
                 #     .estimate_sell_value(

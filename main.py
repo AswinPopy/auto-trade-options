@@ -315,7 +315,8 @@ def build_watchlist(
     return watchlist
 
 
-
+print("ACCESS TOKEN:", ACCESS_TOKEN)
+print("API KEY:", API_KEY)
 # =====================================
 # START
 # =====================================
