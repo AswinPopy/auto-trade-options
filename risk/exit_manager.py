@@ -45,10 +45,7 @@ class ExitManager:
             "underlying_entry"
         )
 
-        if (
-            underlying is None
-            or entry_underlying is None
-        ):
+        if entry_underlying is None:
             print(f"Missing details for {position}, cannot perform exit check")
             return False
 

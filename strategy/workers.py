@@ -145,6 +145,7 @@ def execution_worker():
             qty = order["qty"]
             price = order["price"]
             details = order["details"]
+            details['underlying'] = underlying
             # execution = (
             #     qty_manager
             #     .estimate_buy_cost(
