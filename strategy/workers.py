@@ -113,6 +113,14 @@ def strategy_worker():
                 "price": option_price,
                 "details": details
             })
+            print(
+                "Enqueued execution order:",
+                symbol,
+                "->",
+                option_symbol,
+                "queue size=",
+                execution_queue.qsize()
+            )
         except Exception as e:
             print(f"Error in strategy worker for {symbol} : {e}")
             traceback.print_exc()
@@ -157,6 +165,9 @@ def execution_worker():
 
         except Empty:
             pass
+        except Exception as e:
+            print(f"Error in execution worker: {e}")
+            traceback.print_exc()
 
         # =========================
         # EXIT CHECKS

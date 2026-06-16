@@ -49,6 +49,7 @@ class ExitManager:
             underlying is None
             or entry_underlying is None
         ):
+            print(f"Missing details for {position}, cannot perform exit check")
             return False
 
         candles = self.candle_engine.get_last(
@@ -57,6 +58,7 @@ class ExitManager:
         )
 
         if len(candles) < 25:
+            print(f"Not enough candles to calculate ATR for {underlying}")
             return False
 
         closes = [
@@ -71,6 +73,7 @@ class ExitManager:
         )
 
         if atr is None:
+            print(f"Could not calculate ATR for {underlying}")
             return False
 
         # ==================================
