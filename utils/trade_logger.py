@@ -1,43 +1,53 @@
 import csv
 import os
-from datetime import datetime
+import threading
 import traceback
+from datetime import datetime
+from pathlib import Path
 
 from config import CAPITAL
 
+
 class TradeLogger:
 
+    HEADER = [
+        "Date",
+        "Time",
+        "OrderId",
+        "Symbol",
+        "Entry",
+        "Exit",
+        "Quantity",
+        "PnL",
+        "Capital",
+        "vwap",
+        "atr_percent",
+        "strength",
+        "atr_ratio",
+        "volume_ratio",
+        "distance_from_vwap",
+    ]
+
     def __init__(self):
+        self.file = Path(__file__).resolve().parent.parent / "trade_log.csv"
+        self.lock = threading.Lock()
+        self._ensure_header()
 
-        self.file = "trade_log.csv"
+    def _ensure_header(self):
+        if not self.file.exists():
+            self.file.parent.mkdir(parents=True, exist_ok=True)
+            self._write_rows([self.HEADER])
 
-        # create file if not exists
-        if not os.path.exists(self.file):
-
-            with open(
-                self.file,
-                "w",
-                newline=""
-            ) as f:
-
+    def _write_rows(self, rows):
+        with self.lock:
+            with open(self.file, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
-
-                writer.writerow([
-                    "Date",
-                    "Time",
-                    "Order ID",
-                    "Symbol",
-                    "Entry",
-                    "Exit",
-                    "Quantity",
-                    "PnL",
-                    "Capital",
-                    "VWAP",
-                    "ATR",
-                    "Strength",
-                    "ATR Ratio",
-                    "Volume Ratio"
-                ])
+                writer.writerows(rows)
+                f.flush()
+                try:
+                    os.fsync(f.fileno())
+                except OSError:
+                    pass
 
     def log_trade(
         self,
@@ -57,15 +67,8 @@ class TradeLogger:
     ):
         try:
             now = datetime.now()
-            with open(
-                self.file,
-                "a",
-                newline=""
-            ) as f:
-
-                writer = csv.writer(f)
-
-                writer.writerow([
+            self._write_rows([
+                [
                     now.strftime("%Y-%m-%d"),
                     now.strftime("%H:%M:%S"),
                     order_id,
@@ -80,19 +83,20 @@ class TradeLogger:
                     strength,
                     atr_ratio,
                     volume_ratio,
-                    distance_from_vwap
-                ])
+                    distance_from_vwap,
+                ]
+            ])
         except Exception as e:
             print(f"Error logging trade: {e}")
-            print(traceback.format_exc())   
+            print(traceback.format_exc())
 
     def get_last_capital(self, default_capital=CAPITAL):
-        if not os.path.exists(self.file):
+        if not self.file.exists():
             return default_capital
 
         last_capital = default_capital
 
-        with open(self.file, "r") as f:
+        with open(self.file, "r", encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 capital_value = row.get("Capital")
