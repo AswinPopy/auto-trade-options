@@ -31,7 +31,11 @@ def monitor():
             "Strategy:",
             strategy_queue.qsize(),
             "Execution:",
-            execution_queue.qsize()
+            execution_queue.qsize(),
+            "Capital:",
+            getattr(broker, "capital", None),
+            "Positions:",
+            list(broker.positions.keys())
         )
 
         time.sleep(10)
@@ -104,7 +108,14 @@ def strategy_worker():
                     option_price
                 )
             )
-            print("About to add to execution queue with details:", details)
+            print(
+                "About to add to execution queue with details:",
+                details,
+                "qty:",
+                qty,
+                "capital:",
+                broker.capital
+            )
             details["underlying_entry"] = current_price
             execution_queue.put({
                 "underlying": symbol,
@@ -119,7 +130,9 @@ def strategy_worker():
                 "->",
                 option_symbol,
                 "queue size=",
-                execution_queue.qsize()
+                execution_queue.qsize(),
+                "already_traded=",
+                broker.already_traded
             )
         except Exception as e:
             print(f"Error in strategy worker for {symbol} : {e}")
@@ -131,9 +144,20 @@ def execution_worker():
 
     while True:
         try:
-            print("Waiting for execution order...")
+            print(
+                "Execution worker waiting; queue size=",
+                execution_queue.qsize(),
+                "positions=",
+                len(broker.positions),
+                "capital=",
+                broker.capital
+            )
             order = execution_queue.get(
                 timeout=1
+            )
+            print(
+                "Execution worker received order; queue size after get=",
+                execution_queue.qsize()
             )
             underlying = order["underlying"]
             if underlying in broker.already_traded:
@@ -161,6 +185,7 @@ def execution_worker():
                 qty,
                 details
             )
+            print(f"EXECUTION WORKER BUY COMPLETE : {symbol}")
 
             execution_queue.task_done()
 
@@ -170,10 +195,10 @@ def execution_worker():
             print(f"Error in execution worker: {e}")
             traceback.print_exc()
 
-        # =========================
-        # EXIT CHECKS
-        # =========================
 
+def exit_worker():
+
+    while True:
         for position in list(
             broker.positions.keys()
         ):
@@ -198,13 +223,6 @@ def execution_worker():
 
             if should_exit:
                 print(f"EXITING {position} at price {current}")
-                # execution = (
-                #     qty_manager
-                #     .estimate_sell_value(
-                #         position,
-                #         qty
-                #     )
-                # )
                 details = broker.trade_details.get(
                     position,
                     {}
@@ -218,6 +236,8 @@ def execution_worker():
                 exit_manager.clear_position(
                     position
                 )
+
+        time.sleep(1)
 
 
 

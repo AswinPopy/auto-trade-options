@@ -25,6 +25,7 @@ from config import (
 from strategy.workers import (
     strategy_worker,
     execution_worker,
+    exit_worker,
     monitor
 )
 
@@ -38,13 +39,18 @@ threading.Thread(
 ).start()
 
 threading.Thread(
-target=strategy_worker,
-daemon=True
+    target=strategy_worker,
+    daemon=True
 ).start()
 
 threading.Thread(
-target=execution_worker,
-daemon=True
+    target=execution_worker,
+    daemon=True
+).start()
+
+threading.Thread(
+    target=exit_worker,
+    daemon=True
 ).start()
 
 # =====================================

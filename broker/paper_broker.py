@@ -53,8 +53,24 @@ class PaperBroker:
             print(f"SYMBOL NOT IN POSITIONS BUY : {symbol}")
             return
 
+        now = datetime.now()
+        details["entry_time"] = now.strftime("%Y-%m-%d %H:%M:%S")
         self.trade_details[symbol] = details
         self.already_traded.add(underlying)
+        print(
+            "BUY START:",
+            symbol,
+            "underlying=",
+            underlying,
+            "qty=",
+            qty,
+            "avg_price=",
+            avg_price,
+            "capital_before=",
+            self.capital,
+            "details=",
+            details
+        )
         
         if self.live_trading:
 
@@ -174,6 +190,40 @@ class PaperBroker:
             self.capital -= buy_cost
 
         print(
+            "BUY COMPLETE:",
+            symbol,
+            "qty=",
+            self.quantity[symbol],
+            "avg_price=",
+            self.positions[symbol],
+            "capital_after=",
+            self.capital,
+            "positions=",
+            list(self.positions.keys())
+        )
+
+        self.logger.log_event(
+            event="BUY",
+            symbol=symbol,
+            side="BUY",
+            price=self.positions[symbol],
+            qty=self.quantity[symbol],
+            capital=self.capital,
+            entry=self.positions[symbol],
+            entry_time=details.get("entry_time"),
+            exit_price="",
+            pnl=None,
+            vwap=details.get("vwap"),
+            atr=details.get("atr_percent"),
+            strength=details.get("candle_strength"),
+            atr_ratio=details.get("atr_ratio"),
+            volume_ratio=details.get("volume_ratio"),
+            distance_from_vwap=details.get("distance_from_vwap"),
+            details=str(details),
+            order_id=order_id,
+        )
+
+        print(
             f"🟢 BOUGHT "
             f"{symbol} "
             f"Qty={self.quantity[symbol]} "
@@ -199,6 +249,20 @@ class PaperBroker:
         entry = self.positions[symbol]
 
         qty = self.quantity[symbol]
+        print(
+            "SELL START:",
+            symbol,
+            "entry=",
+            entry,
+            "qty=",
+            qty,
+            "capital_before=",
+            self.capital,
+            "entry_time=",
+            details.get("entry_time"),
+            "trade_details=",
+            details
+        )
 
         # ==========================
         # LIVE EXIT
@@ -305,11 +369,42 @@ class PaperBroker:
         )
         self.capital += proceeds
         self.realized_pnl += pnl
+        print(
+            "SELL COMPLETE:",
+            symbol,
+            "price=",
+            price,
+            "pnl=",
+            pnl,
+            "capital_after=",
+            self.capital
+        )
+        self.logger.log_event(
+            event="SELL",
+            symbol=symbol,
+            side="SELL",
+            price=price,
+            qty=qty,
+            capital=self.capital,
+            entry=entry,
+            entry_time=details.get("entry_time"),
+            exit_price=price,
+            pnl=pnl,
+            vwap=vwap,
+            atr=atr_percent,
+            strength=strength,
+            atr_ratio=atr_ratio,
+            volume_ratio=volume_ratio,
+            distance_from_vwap=distance_from_vwap,
+            details=str(details),
+            order_id=order_id,
+        )
         print("About to log trade with details:", details)
         self.logger.log_trade(
             order_id,
             symbol,
             entry,
+            details.get("entry_time"),
             price,
             qty,
             pnl,
