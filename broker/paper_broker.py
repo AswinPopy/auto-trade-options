@@ -37,7 +37,7 @@ class PaperBroker:
         ):
         print(f"INSIDE BUY : {symbol}")
         now = datetime.now()
-
+        order_id = None
         current_min = (
             now.hour * 60
             + now.minute
