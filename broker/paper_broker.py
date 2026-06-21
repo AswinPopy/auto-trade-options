@@ -56,6 +56,7 @@ class PaperBroker:
     def sync_capital(self):
         if self.live_trading:
             self.capital = self._fetch_live_capital()
+        print(f"Synced capital: {self.capital:.2f}")
         return self.capital
 
     def _get_current_price(self, symbol):
@@ -434,7 +435,10 @@ class PaperBroker:
             price
             * qty
         )
-        self.capital += proceeds
+        if self.live_trading:
+            self.sync_capital()
+        else:
+            self.capital += proceeds
         self.realized_pnl += pnl
         print(
             "SELL COMPLETE:",
