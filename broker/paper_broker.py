@@ -34,11 +34,12 @@ class PaperBroker:
     def _fetch_live_capital(self):
         try:
             margins = kite.margins("equity")
+            margins = margins["data"]
 
             available = margins.get("available", {})
 
-            cash = available.get("cash")
-
+            cash = available.get("live_balance")
+            print(f"Fetch capital now : {cash}")
             if cash is not None:
                 return float(cash)
 
@@ -119,6 +120,9 @@ class PaperBroker:
             print(f"CURRENT PRICE IS NONE FOR {symbol}")
             return
 
+        if self.live_trading:
+            self.sync_capital()
+
         qty = self._calculate_qty(current_price, symbol)
         if qty <= 0:
             print(f"Quantity is 0 for {symbol}, skipping buy")
@@ -128,8 +132,6 @@ class PaperBroker:
         details["entry_time"] = now.strftime("%Y-%m-%d %H:%M:%S")
         self.trade_details[symbol] = details
         self.already_traded.add(underlying)
-        if self.live_trading:
-            self.sync_capital()
 
         print(
             "BUY START:",
