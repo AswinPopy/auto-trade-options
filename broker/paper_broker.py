@@ -237,7 +237,6 @@ class PaperBroker:
                 return
 
             self.capital -= buy_cost
-
         else:
             self.positions[symbol] = (
                 current_price
@@ -306,7 +305,6 @@ class PaperBroker:
     def sell(
         self,
         symbol,
-        price,
         details
         ):
         print("About to sell trade", details)
