@@ -200,7 +200,6 @@ def exit_worker():
                 )
                 broker.sell(
                     position,
-                    current,
                     details
                 )
                 del broker.trade_details[position]
