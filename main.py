@@ -60,7 +60,8 @@ threading.Thread(
 from data.shared import (
 live_prices,
 broker,
-candle_engine
+candle_engine,
+risk_manager
 )
 
 
@@ -116,6 +117,18 @@ for i in nfo_instruments:
         
     token_to_symbol[token] = symbol
     symbol_to_token[symbol] = token
+
+lot_size_map = {
+    item["tradingsymbol"]: item["lot_size"]
+    for item in nfo_instruments
+    if (
+        "tradingsymbol" in item
+        and "lot_size" in item
+    )
+}
+
+
+risk_manager.set_lot_size_map(lot_size_map)
 
 # =====================================
 # GET SYMBOL

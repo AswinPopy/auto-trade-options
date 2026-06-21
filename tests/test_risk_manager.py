@@ -8,14 +8,17 @@ from utils.trade_logger import TradeLogger
 
 class RiskManagerTests(unittest.TestCase):
     def setUp(self):
-        self.manager = RiskManager()
+        self.manager = RiskManager(lot_size_map={"TEST1234": 200})
 
     def test_returns_zero_when_capital_cannot_cover_one_lot(self):
-        self.assertEqual(self.manager.get_quantity(1000, 50), 0)
+        self.assertEqual(self.manager.get_quantity(1000, 50, "TEST1234"), 0)
 
     def test_returns_zero_for_non_positive_capital(self):
-        self.assertEqual(self.manager.get_quantity(0, 50), 0)
-        self.assertEqual(self.manager.get_quantity(-1000, 50), 0)
+        self.assertEqual(self.manager.get_quantity(0, 50, "TEST1234"), 0)
+        self.assertEqual(self.manager.get_quantity(-1000, 50, "TEST1234"), 0)
+
+    def test_returns_one_lot_quantity_based_on_symbol_lot_size(self):
+        self.assertEqual(self.manager.get_quantity(20000, 50, "TEST1234"), 200)
 
 
 class TradeLoggerTests(unittest.TestCase):

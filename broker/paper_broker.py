@@ -4,13 +4,22 @@ from utils.trade_logger import (
 import time
 from broker.kite_session import kite
 from datetime import datetime
+from config import LIVE_TRADING
+
+
 class PaperBroker:
 
     def __init__(self):
 
         self.logger = TradeLogger()
 
-        self.capital = self.logger.get_last_capital()
+        self.live_trading = LIVE_TRADING
+
+        self.capital = (
+            self._fetch_live_capital()
+            if self.live_trading
+            else self.logger.get_last_capital()
+        )
 
         self.positions = {}
 
@@ -18,11 +27,65 @@ class PaperBroker:
 
         self.realized_pnl = 0
 
-        self.live_trading = False
-
         self.order_ids = {}
         self.trade_details = {}
         self.already_traded = set()
+
+    def _fetch_live_capital(self):
+        try:
+            margins = kite.margins("equity")
+
+            available = margins.get("available", {})
+
+            cash = available.get("cash")
+
+            if cash is not None:
+                return float(cash)
+
+            return self.logger.get_last_capital()
+
+        except Exception as e:
+            print(
+                "Failed to fetch live capital from Kite:",
+                e
+            )
+
+            return self.logger.get_last_capital()
+
+    def sync_capital(self):
+        if self.live_trading:
+            self.capital = self._fetch_live_capital()
+        return self.capital
+
+    def _get_current_price(self, symbol):
+        try:
+            quote = kite.quote(f"NFO:{symbol}")
+            quote_data = quote.get(f"NFO:{symbol}", {})
+            price = quote_data.get("last_price")
+            if price is None:
+                price = quote_data.get("last_price")
+            return float(price) if price is not None else None
+        except Exception as e:
+            print(
+                f"Failed to fetch current price for {symbol}:",
+                e
+            )
+            return None
+
+    def _calculate_qty(self, current_price, symbol):
+        try:
+            from data.shared import risk_manager
+            return risk_manager.get_quantity(
+                self.capital,
+                current_price,
+                symbol
+            )
+        except Exception as e:
+            print(
+                f"Failed to calculate quantity for {symbol}:",
+                e
+            )
+            return 0
 
     # =========================
     # BUY
@@ -31,8 +94,6 @@ class PaperBroker:
         self,
         underlying,
         symbol,
-        avg_price,
-        qty,
         details
         ):
         print(f"INSIDE BUY : {symbol}")
@@ -44,7 +105,7 @@ class PaperBroker:
         )
 
         # Do not buy after 1:30 PM
-        if current_min > (13 * 60 + 30):
+        if current_min > (13 * 60):
 
             return
 
@@ -53,19 +114,31 @@ class PaperBroker:
             print(f"SYMBOL NOT IN POSITIONS BUY : {symbol}")
             return
 
+        current_price = self._get_current_price(symbol)
+        if current_price is None:
+            print(f"CURRENT PRICE IS NONE FOR {symbol}")
+            return
+
+        qty = self._calculate_qty(current_price, symbol)
+        if qty <= 0:
+            print(f"Quantity is 0 for {symbol}, skipping buy")
+            return
+
         now = datetime.now()
         details["entry_time"] = now.strftime("%Y-%m-%d %H:%M:%S")
         self.trade_details[symbol] = details
         self.already_traded.add(underlying)
+        if self.live_trading:
+            self.sync_capital()
+
         print(
             "BUY START:",
             symbol,
-            "underlying=",
             underlying,
             "qty=",
             qty,
             "avg_price=",
-            avg_price,
+            current_price,
             "capital_before=",
             self.capital,
             "details=",
@@ -108,10 +181,7 @@ class PaperBroker:
                     )
                 )
 
-                latest = max(
-                    order_history,
-                    key=lambda x: x["order_timestamp"]
-                    )
+                latest = order_history[-1]
 
 
                 status = latest["status"]
@@ -170,13 +240,13 @@ class PaperBroker:
 
         else:
             self.positions[symbol] = (
-                avg_price
+                current_price
             )
 
             self.quantity[symbol] = qty
 
             buy_cost = (
-                avg_price
+                current_price
                 * qty
             )
 
@@ -303,10 +373,7 @@ class PaperBroker:
                     )
                 )
 
-                latest = max(
-                    order_history,
-                    key=lambda x: x["order_timestamp"]
-                )
+                latest = order_history[-1]
 
                 status = latest["status"]
 

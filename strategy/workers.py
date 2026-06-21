@@ -90,29 +90,13 @@ def strategy_worker():
                 print("ELSE CONTINUE")
                 continue
             print(f"OPTION SYM : {option_symbol}")
-            option_price = (
-                live_prices.get(
-                    option_symbol
-                )
-            )
-            print(f"OPTION PRICE : {option_price}")
-            if option_price is None:
-                print("OPTION PRICE IS NONE")
-                print("Option symbol in live prices", option_symbol in live_prices)
-                print("Live prices", live_prices.keys())
-                continue
 
-            qty = (
-                risk_manager.get_quantity(
-                    broker.capital,
-                    option_price
-                )
-            )
+            if broker.live_trading:
+                broker.sync_capital()
+
             print(
                 "About to add to execution queue with details:",
                 details,
-                "qty:",
-                qty,
                 "capital:",
                 broker.capital
             )
@@ -120,8 +104,6 @@ def strategy_worker():
             execution_queue.put({
                 "underlying": symbol,
                 "symbol": option_symbol,
-                "qty": qty,
-                "price": option_price,
                 "details": details
             })
             print(
@@ -166,23 +148,12 @@ def execution_worker():
                 continue
             symbol = order["symbol"]
             print(f"EXECUTION WORKER SYMBOL : {symbol}")
-            qty = order["qty"]
-            price = order["price"]
             details = order["details"]
             details['underlying'] = underlying
-            # execution = (
-            #     qty_manager
-            #     .estimate_buy_cost(
-            #         symbol,
-            #         qty
-            #     )
-            # )
             print("EXECUTION WORKER BUY")
             broker.buy(
                 underlying,
                 symbol,
-                price,
-                qty,
                 details
             )
             print(f"EXECUTION WORKER BUY COMPLETE : {symbol}")
