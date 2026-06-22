@@ -34,7 +34,8 @@ class PaperBroker:
     def _fetch_live_capital(self):
         try:
             margins = kite.margins("equity")
-            margins = margins["data"]
+            if isinstance(margins, dict) and "data" in margins:
+                margins = margins["data"]
 
             available = margins.get("available", {})
 
