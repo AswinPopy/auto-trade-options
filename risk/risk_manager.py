@@ -29,7 +29,9 @@ class RiskManager:
 
         max_amount = capital * 0.5
         lot_cost = option_price * lot_size
-
+        print(f"lot size here -- {lot_size}")
+        print(f"option price here -- {option_price}")
+        
         if lot_cost <= 0:
             print(f"lot cost less than 0 : {lot_cost}")
             return 0
@@ -46,6 +48,7 @@ class RiskManager:
     
     def get_lot_size(self, symbol):
         if not symbol:
+            print(f"No symbol exists for : {symbol}")
             return self._default_lot_size
 
         return self._lot_size_map.get(symbol, self._default_lot_size)

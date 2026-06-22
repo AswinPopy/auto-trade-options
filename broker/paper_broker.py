@@ -172,7 +172,9 @@ class PaperBroker:
                 product=kite.PRODUCT_MIS,
 
                 order_type=
-                kite.ORDER_TYPE_MARKET
+                kite.ORDER_TYPE_MARKET,
+
+                market_protection=1
             )
 
             print(
@@ -365,7 +367,8 @@ class PaperBroker:
                 product=kite.PRODUCT_MIS,
 
                 order_type=
-                kite.ORDER_TYPE_MARKET
+                kite.ORDER_TYPE_MARKET,
+                market_protection=1
             )
 
             print(
