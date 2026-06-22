@@ -190,7 +190,13 @@ def on_ticks(ws, ticks):
 
             broker.sell(
                 position,
-                current
+                {
+                    "exit_price": current,
+                    "entry_time": broker.trade_details.get(
+                        position,
+                        {}
+                    ).get("entry_time")
+                }
             )
 
         print(

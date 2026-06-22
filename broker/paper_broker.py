@@ -339,6 +339,9 @@ class PaperBroker:
         # ==========================
         # LIVE EXIT
         # ==========================
+        price = None
+        exit_details = details if isinstance(details, dict) else {}
+
         if self.live_trading:
 
             order_id = kite.place_order(
@@ -418,6 +421,16 @@ class PaperBroker:
                 return
 
             price = actual_exit_price
+        else:
+            price = exit_details.get("exit_price") or exit_details.get("price")
+            if price is None:
+                price = details if not isinstance(details, dict) else None
+
+            if price is None:
+                print(
+                    "❌ No exit price provided for paper sell"
+                )
+                return
 
         # ==========================
         # PnL

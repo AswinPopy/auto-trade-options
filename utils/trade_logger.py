@@ -177,12 +177,13 @@ class TradeLogger:
             print(traceback.format_exc())
 
     def get_last_capital(self, default_capital=CAPITAL):
-        if not self.file.exists():
+        file_path = Path(self.file)
+        if not file_path.exists():
             return default_capital
 
         last_capital = default_capital
 
-        with open(self.file, "r", encoding="utf-8", newline="") as f:
+        with open(file_path, "r", encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 capital_value = row.get("Capital")
