@@ -3,3 +3,4 @@ python-dotenv
 websocket-client
 twisted
 autobahn
+playwright
