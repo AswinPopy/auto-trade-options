@@ -1,9 +1,55 @@
+from datetime import date
+import calendar
+
 from utils.strike_steps import (
     get_strike_step
 )
 import math
 
-EXPIRY = "26JUN"
+
+def get_monthly_nse_expiry(
+    year=None,
+    month=None
+):
+    today = date.today()
+
+    if year is None:
+        year = today.year
+
+    if month is None:
+        month = today.month
+
+    month_calendar = calendar.monthcalendar(year, month)
+    thursdays = [
+        week[calendar.THURSDAY]
+        for week in month_calendar
+        if week[calendar.THURSDAY] != 0
+    ]
+
+    return date(year, month, thursdays[-1])
+
+
+def get_expiry_symbol_month(
+    reference_date=None
+):
+    if reference_date is None:
+        reference_date = date.today()
+
+    expiry_year = reference_date.year
+    expiry_month = reference_date.month
+
+    if reference_date.day > 15:
+        expiry_month = expiry_month % 12 + 1
+        if expiry_month == 1:
+            expiry_year += 1
+
+    expiry_date = get_monthly_nse_expiry(
+        expiry_year,
+        expiry_month
+    )
+
+    return expiry_date.strftime("%d%b").upper()
+
 
 def get_atm_strike(
     stock,
@@ -45,9 +91,11 @@ def get_ce_symbol(
         "CE"
     )
 
+    expiry = get_expiry_symbol_month()
+
     return (
         f"{stock}"
-        f"{EXPIRY}"
+        f"{expiry}"
         f"{strike}CE"
     )
 
@@ -63,9 +111,11 @@ def get_pe_symbol(
         "PE"
     )
 
+    expiry = get_expiry_symbol_month()
+
     return (
         f"{stock}"
-        f"{EXPIRY}"
+        f"{expiry}"
         f"{strike}PE"
     )
 

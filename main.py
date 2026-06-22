@@ -12,6 +12,10 @@ from utils.strike_steps import (
     get_strike_step
 )
 
+from market.option_selector import (
+    get_expiry_symbol_month
+)
+
 from datetime import datetime
 from kiteconnect import (
     KiteTicker
@@ -323,7 +327,7 @@ def build_watchlist(
 
     watchlist = [stock]
 
-    expiry = "26JUN"
+    expiry = get_expiry_symbol_month()
 
     for strike in strikes:
 
