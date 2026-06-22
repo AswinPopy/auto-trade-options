@@ -78,6 +78,11 @@ class PaperBroker:
     def _calculate_qty(self, current_price, symbol):
         try:
             from data.shared import risk_manager
+
+            print(f"Current price for quantity : {current_price}")
+            print(f"total capital for quantity : {self.capital}")
+            print(f"symbol for quantity : {symbol}")
+            
             return risk_manager.get_quantity(
                 self.capital,
                 current_price,

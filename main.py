@@ -131,6 +131,7 @@ lot_size_map = {
     )
 }
 
+print(f"lot size map is : {lot_size_map}")
 
 risk_manager.set_lot_size_map(lot_size_map)
 
