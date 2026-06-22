@@ -1,5 +1,4 @@
 from datetime import date
-import calendar
 
 from utils.strike_steps import (
     get_strike_step
@@ -19,14 +18,7 @@ def get_monthly_nse_expiry(
     if month is None:
         month = today.month
 
-    month_calendar = calendar.monthcalendar(year, month)
-    thursdays = [
-        week[calendar.THURSDAY]
-        for week in month_calendar
-        if week[calendar.THURSDAY] != 0
-    ]
-
-    return date(year, month, thursdays[-1])
+    return date(year, month, 26)
 
 
 def get_expiry_symbol_month(
