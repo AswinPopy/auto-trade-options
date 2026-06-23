@@ -2,6 +2,7 @@ from utils.trade_logger import (
     TradeLogger
 )
 import time
+import threading
 from broker.kite_session import kite
 from datetime import datetime
 from config import LIVE_TRADING
@@ -30,6 +31,9 @@ class PaperBroker:
         self.order_ids = {}
         self.trade_details = {}
         self.already_traded = set()
+        self.pending_orders = {}
+        self.completed_order_updates = {}
+        self._pending_lock = threading.Lock()
 
     def _fetch_live_capital(self):
         try:
@@ -60,13 +64,78 @@ class PaperBroker:
         print(f"Synced capital: {self.capital:.2f}")
         return self.capital
 
+    def _register_order_update(self, order_id, update):
+        if not order_id or not update:
+            return
+
+        order_id = str(order_id)
+        status = update.get("status")
+        event_to_set = None
+
+        with self._pending_lock:
+            pending = self.pending_orders.get(order_id)
+            if pending is None:
+                self.completed_order_updates[order_id] = update
+                return
+
+            pending["status"] = status
+            pending["average_price"] = float(update.get("average_price") or 0)
+            pending["filled_quantity"] = int(update.get("filled_quantity") or 0)
+            pending["update"] = update
+
+            if status in ["COMPLETE", "REJECTED", "CANCELLED"]:
+                if status == "COMPLETE" and pending.get("symbol"):
+                    self.order_ids[pending["symbol"]] = order_id
+                event_to_set = pending["event"]
+        
+        if event_to_set:
+            event_to_set.set()
+
+    def on_order_update(self, ws, data):
+        order_id = data.get("order_id") or data.get("orderId")
+        if order_id is None:
+            return
+
+        print(
+            f"📣 Order update received: {order_id} {data.get('status')}"
+        )
+        self._register_order_update(order_id, data)
+
+    def _wait_for_order_update(self, order_id, symbol=None, timeout=30):
+        if order_id is None:
+            return None
+
+        order_id = str(order_id)
+        with self._pending_lock:
+            if order_id in self.completed_order_updates:
+                return self.completed_order_updates.pop(order_id)
+
+            event = threading.Event()
+            self.pending_orders[order_id] = {
+                "event": event,
+                "symbol": symbol,
+                "status": None,
+                "average_price": None,
+                "filled_quantity": 0,
+                "update": None,
+            }
+
+        finished = event.wait(timeout)
+
+        with self._pending_lock:
+            pending = self.pending_orders.pop(order_id, None)
+
+        if not finished or pending is None:
+            return None
+
+        return pending.get("update") or pending
+
     def _get_current_price(self, symbol):
         try:
             quote = kite.quote(f"NFO:{symbol}")
             quote_data = quote.get(f"NFO:{symbol}", {})
             price = quote_data.get("last_price")
-            if price is None:
-                price = quote_data.get("last_price")
+    
             return float(price) if price is not None else None
         except Exception as e:
             print(
@@ -182,46 +251,43 @@ class PaperBroker:
                 f"{order_id}"
             )
 
-            actual_avg_price = None
+            order_info = self._wait_for_order_update(
+                order_id,
+                symbol=symbol,
+                timeout=15
+            )
 
-            for _ in range(10):
-
-                order_history = (
-                    kite.order_history(
-                        order_id
-                    )
+            if order_info is None:
+                print(
+                    f"⚠️ Order update timeout for {order_id}, fetching order history"
                 )
+                order_history = kite.order_history(order_id)
+                latest = order_history[-1] if order_history else {}
+            else:
+                latest = order_info
 
-                latest = order_history[-1]
-
-
-                status = latest["status"]
-
-                if status == "COMPLETE":
-                    
-                    self.order_ids[symbol] = order_id
-                    actual_avg_price = (
-                        float(latest["average_price"])
+            status = latest.get("status")
+            if status == "COMPLETE":
+                self.order_ids[symbol] = order_id
+                actual_avg_price = float(latest.get("average_price") or 0)
+            elif status in ["REJECTED", "CANCELLED"]:
+                print(
+                    f"❌ ORDER {status}"
+                )
+                return
+            else:
+                try:
+                    kite.cancel_order(
+                        variety=kite.VARIETY_REGULAR,
+                        order_id=order_id
                     )
-
-                    break
-
-                if status in [
-                    "REJECTED",
-                    "CANCELLED"
-                    ]:
-
+                except Exception as e:
                     print(
-                        f"❌ ORDER {status}"
+                        f"Cancel failed: {e}"
                     )
-
-                    return
-                time.sleep(0.5)
-
-            if actual_avg_price is None:
 
                 print(
-                    "❌ ORDER NOT FILLED"
+                    f"❌ BUY ORDER ACTIVE: {status}"
                 )
 
                 return
@@ -229,7 +295,10 @@ class PaperBroker:
             self.positions[symbol] = (
                 actual_avg_price
             )
-            filled_qty = latest["filled_quantity"]
+
+            filled_qty = int(
+                latest.get("filled_quantity") or qty
+            )
 
             self.quantity[symbol] = (
                 filled_qty
@@ -350,85 +419,77 @@ class PaperBroker:
         exit_details = details if isinstance(details, dict) else {}
 
         if self.live_trading:
-
-            order_id = kite.place_order(
-
-                variety=kite.VARIETY_REGULAR,
-
-                exchange=kite.EXCHANGE_NFO,
-
-                tradingsymbol=symbol,
-
-                transaction_type=
-                kite.TRANSACTION_TYPE_SELL,
-
-                quantity=qty,
-
-                product=kite.PRODUCT_MIS,
-
-                order_type=
-                kite.ORDER_TYPE_MARKET,
-                market_protection=-1
-            )
-
-            print(
-                f"LIVE SELL ORDER : "
-                f"{order_id}"
-            )
-
+            
+            max_attempts = 3
             actual_exit_price = None
 
-            for _ in range(10):
+            for attempt in range(max_attempts):
+                order_id = kite.place_order(
 
-                order_history = (
-                    kite.order_history(
-                        order_id
-                    )
+                    variety=kite.VARIETY_REGULAR,
+
+                    exchange=kite.EXCHANGE_NFO,
+
+                    tradingsymbol=symbol,
+
+                    transaction_type=
+                    kite.TRANSACTION_TYPE_SELL,
+
+                    quantity=qty,
+
+                    product=kite.PRODUCT_MIS,
+
+                    order_type=
+                    kite.ORDER_TYPE_MARKET,
+                    market_protection=-1
                 )
 
-                latest = order_history[-1]
+                print(
+                    f"LIVE SELL ORDER : "
+                    f"{order_id}"
+                )
 
-                status = latest["status"]
+                order_info = self._wait_for_order_update(
+                    order_id,
+                    symbol=symbol,
+                    timeout=60
+                )
 
-                if status == "COMPLETE":
-
-                    actual_exit_price = (
-                        float(
-                            latest[
-                                "average_price"
-                            ]
-                        )
-                    )
-
-                    qty = latest[
-                        "filled_quantity"
-                    ]
-
-                    break
-
-                if status in [
-                    "REJECTED",
-                    "CANCELLED"
-                ]:
-
+                if order_info is None:
                     print(
-                        f"❌ SELL ORDER "
-                        f"{status}"
+                        f"⚠️ Sell order update timeout for {order_id}, fetching order history"
+                    )
+                    order_history = kite.order_history(order_id)
+                    latest = order_history[-1] if order_history else {}
+                else:
+                    latest = order_info
+
+                status = latest.get("status")
+                if status == "COMPLETE":
+                    actual_exit_price = float(latest.get("average_price") or 0)
+                    qty = int(latest.get("filled_quantity") or qty)
+                    break
+                elif status in ["REJECTED", "CANCELLED"]:
+                    print(
+                        f"Sell attempt {attempt + 1} failed. "
+                        f"Order={order_id} "
+                        f"Status={status}"
                     )
 
+                    continue
+                else:
+                    print(
+                        f"Exit order still active: {status}"
+                    )
                     return
-
-                time.sleep(0.5)
-
-            if actual_exit_price is None:
-
+                
+            else:
                 print(
                     "❌ SELL NOT FILLED"
                 )
-
                 return
 
-            price = actual_exit_price
+            price = actual_exit_price   
         else:
             price = exit_details.get("exit_price") or exit_details.get("price")
             if price is None:

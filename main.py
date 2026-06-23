@@ -359,6 +359,8 @@ kws.on_ticks = on_ticks
 
 kws.on_connect = on_connect
 
+kws.on_order_update = broker.on_order_update
+
 print(
     "🚀 Starting..."
 )
