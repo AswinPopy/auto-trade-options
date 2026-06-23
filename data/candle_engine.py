@@ -18,16 +18,21 @@ class CandleEngine:
 ):
 
         now = datetime.now()
+        today = now.date()
 
         minute = (
             now.hour * 60
             + now.minute
         )
 
-        # first candle
-        if symbol not in self.current:
+        # first candle or new day
+        if (
+            symbol not in self.current
+            or self.current[symbol].get("date") != today
+        ):
 
             self.current[symbol] = {
+                "date": today,
                 "minute": minute,
                 "open": price,
                 "high": price,
@@ -61,12 +66,14 @@ class CandleEngine:
         # candle complete
         completed = candle.copy()
 
+        completed["date"] = today
         self.history[symbol].append(
             completed
         )
 
         # new candle
         self.current[symbol] = {
+            "date": today,
             "minute": minute,
             "open": price,
             "high": price,
@@ -80,3 +87,19 @@ class CandleEngine:
     def get_last(self, symbol, n=2):
 
         return self.history[symbol][-n:]
+
+    def get_day_candles(self, symbol):
+
+        today = datetime.now().date()
+        candles = []
+
+        for candle in self.history.get(symbol, []):
+            if candle.get("date") in (None, today):
+                candles.append(candle)
+
+        if symbol in self.current:
+            current_candle = self.current[symbol]
+            if current_candle.get("date") in (None, today):
+                candles.append(current_candle.copy())
+
+        return candles

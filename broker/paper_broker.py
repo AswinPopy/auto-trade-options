@@ -368,6 +368,7 @@ class PaperBroker:
             atr_ratio=details.get("atr_ratio"),
             volume_ratio=details.get("volume_ratio"),
             distance_from_vwap=details.get("distance_from_vwap"),
+            daily_slope=details.get("daily_slope"),
             details=str(details),
             order_id=order_id,
         )
@@ -550,6 +551,7 @@ class PaperBroker:
             atr_ratio=atr_ratio,
             volume_ratio=volume_ratio,
             distance_from_vwap=distance_from_vwap,
+            daily_slope=details.get("daily_slope"),
             details=str(details),
             order_id=order_id,
         )
@@ -568,7 +570,8 @@ class PaperBroker:
             strength,
             atr_ratio,
             volume_ratio,
-            distance_from_vwap
+            distance_from_vwap,
+            details.get("daily_slope")
         )
 
         print(

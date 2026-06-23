@@ -4,6 +4,9 @@ from strategy.indicators import (
     calculate_ema,
     calculate_vwap
 )
+from strategy.slope_filter import (
+    calculate_daily_slope
+)
 
 
 class StrategyEngine:
@@ -297,9 +300,8 @@ class StrategyEngine:
         symbol
     ):
         details = {}
-        candles = self.reader.get_last(
-            symbol,
-            60
+        candles = self.reader.get_day_candles(
+            symbol
         )
         
         closes = [c["close"] for c in candles[-25:]]
@@ -463,6 +465,15 @@ class StrategyEngine:
                     f"🟢 {symbol} : Volume Breakout : CE"
                 )
             
+            slope = calculate_daily_slope(candles)
+            details['daily_slope'] = slope
+
+            if slope < 0:
+                print(
+                    f"⛔ {symbol} : BUY CE rejected by slope filter (slope={slope:.2f})"
+                )
+                return None, details
+
             print(
                 f"🟢 {symbol} : BUY CE SIGNAL"
             )
@@ -566,6 +577,15 @@ class StrategyEngine:
                     f"🟡 {symbol} : Volume Breakout : PE"
                 )
             
+            slope = calculate_daily_slope(candles)
+            details['daily_slope'] = slope
+
+            if slope > 0:
+                print(
+                    f"⛔ {symbol} : BUY PE rejected by slope filter (slope={slope:.2f})"
+                )
+                return None, details
+
             print(
                 f"🟡 {symbol} BUY PE SIGNAL"
             )

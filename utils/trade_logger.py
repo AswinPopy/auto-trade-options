@@ -28,6 +28,7 @@ class TradeLogger:
         "atr_ratio",
         "volume_ratio",
         "distance_from_vwap",
+        "daily_slope",
     ]
 
     EVENT_HEADER = [
@@ -51,6 +52,7 @@ class TradeLogger:
         "atr_ratio",
         "volume_ratio",
         "distance_from_vwap",
+        "daily_slope",
         "Details",
     ]
 
@@ -62,14 +64,28 @@ class TradeLogger:
         self._ensure_event_header()
 
     def _ensure_header(self):
-        if not self.file.exists():
-            self.file.parent.mkdir(parents=True, exist_ok=True)
-            self._write_rows(self.file, [self.HEADER])
+        self._ensure_csv_header(self.file, self.HEADER)
 
     def _ensure_event_header(self):
-        if not self.event_file.exists():
-            self.event_file.parent.mkdir(parents=True, exist_ok=True)
-            self._write_rows(self.event_file, [self.EVENT_HEADER])
+        self._ensure_csv_header(self.event_file, self.EVENT_HEADER)
+
+    def _ensure_csv_header(self, file_path, header):
+        if not file_path.exists():
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            self._write_rows(file_path, [header])
+            return
+
+        with open(file_path, "r", encoding="utf-8", newline="") as f:
+            rows = list(csv.reader(f))
+
+        if not rows or rows[0] != header:
+            with open(file_path, "w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(header)
+                for row in rows[1:]:
+                    if len(row) < len(header):
+                        row = row + [""] * (len(header) - len(row))
+                    writer.writerow(row[:len(header)])
 
     def _write_rows(self, file_path, rows):
         with self.lock:
@@ -97,7 +113,8 @@ class TradeLogger:
         strength,
         atr_ratio,
         volume_ratio,
-        distance_from_vwap
+        distance_from_vwap,
+        daily_slope=None,
     ):
         try:
             self._write_rows(self.file, [
@@ -118,6 +135,7 @@ class TradeLogger:
                     atr_ratio,
                     volume_ratio,
                     distance_from_vwap,
+                    daily_slope,
                 ]
             ])
         except Exception as e:
@@ -144,6 +162,7 @@ class TradeLogger:
         distance_from_vwap,
         details=None,
         order_id=None,
+        daily_slope=None,
     ):
         try:
             event_id = uuid.uuid4().hex
@@ -169,6 +188,7 @@ class TradeLogger:
                     atr_ratio,
                     volume_ratio,
                     distance_from_vwap,
+                    daily_slope,
                     details,
                 ]
             ])
