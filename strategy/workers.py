@@ -188,9 +188,6 @@ def exit_worker():
                 )
             )
 
-            qty = broker.quantity[
-                position
-            ]
 
             if should_exit:
                 print(f"EXITING {position} at price {current}")

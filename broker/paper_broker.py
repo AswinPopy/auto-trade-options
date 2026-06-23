@@ -29,6 +29,7 @@ class PaperBroker:
         self.realized_pnl = 0
 
         self.order_ids = {}
+        self.stop_loss_order_ids = {}
         self.trade_details = {}
         self.already_traded = set()
         self.pending_orders = {}
@@ -130,6 +131,20 @@ class PaperBroker:
 
         return pending.get("update") or pending
 
+    def get_position_qty(self, symbol):
+        try:
+            positions = kite.positions()
+
+            for pos in positions["net"]:
+                if pos["tradingsymbol"] == symbol:
+                    return int(pos["quantity"])
+
+            return 0
+
+        except Exception as e:
+            print(f"Failed to get position qty: {e}")
+            return None
+    
     def _get_current_price(self, symbol):
         try:
             quote = kite.quote(f"NFO:{symbol}")
@@ -163,6 +178,42 @@ class PaperBroker:
                 e
             )
             return 0
+
+    def _get_stop_loss_price(self, entry_price):
+        if entry_price is None:
+            return None
+
+        entry_price = float(entry_price)
+        if entry_price <= 0:
+            return None
+
+        return round(entry_price * .80, 2)
+
+    def _place_stop_loss_order(self, symbol, qty, entry_price):
+        if not self.live_trading:
+            return None
+
+        stop_loss_price = self._get_stop_loss_price(entry_price)
+        if stop_loss_price is None:
+            return None
+
+        try:
+            order_id = kite.place_order(
+                variety=kite.VARIETY_REGULAR,
+                exchange=kite.EXCHANGE_NFO,
+                tradingsymbol=symbol,
+                transaction_type=kite.TRANSACTION_TYPE_SELL,
+                quantity=qty,
+                product=kite.PRODUCT_MIS,
+                order_type=kite.ORDER_TYPE_SLM,
+                trigger_price=stop_loss_price,
+            )
+            self.stop_loss_order_ids[symbol] = order_id
+            print(f"🛑 Stop-loss order placed for {symbol} at {stop_loss_price}")
+            return order_id
+        except Exception as e:
+            print(f"Failed to place stop-loss order for {symbol}: {e}")
+            return None
 
     # =========================
     # BUY
@@ -206,8 +257,6 @@ class PaperBroker:
 
         now = datetime.now()
         details["entry_time"] = now.strftime("%Y-%m-%d %H:%M:%S")
-        self.trade_details[symbol] = details
-        self.already_traded.add(underlying)
 
         print(
             "BUY START:",
@@ -261,15 +310,24 @@ class PaperBroker:
                 print(
                     f"⚠️ Order update timeout for {order_id}, fetching order history"
                 )
-                order_history = kite.order_history(order_id)
+                try:
+                    order_history = kite.order_history(order_id)
+                except Exception as e:
+                    print(f"Could not fetch order history: {e}")
+                    order_history = []
                 latest = order_history[-1] if order_history else {}
             else:
                 latest = order_info
 
             status = latest.get("status")
             if status == "COMPLETE":
+                self.trade_details[symbol] = details
+                self.already_traded.add(underlying)
                 self.order_ids[symbol] = order_id
                 actual_avg_price = float(latest.get("average_price") or 0)
+                sl_order_id = self._place_stop_loss_order(symbol, qty, actual_avg_price)
+                if sl_order_id is None:
+                    print("WARNING: No stop loss placed")
             elif status in ["REJECTED", "CANCELLED"]:
                 print(
                     f"❌ ORDER {status}"
@@ -292,17 +350,12 @@ class PaperBroker:
 
                 return
 
-            self.positions[symbol] = (
-                actual_avg_price
-            )
+            
 
             filled_qty = int(
                 latest.get("filled_quantity") or qty
             )
 
-            self.quantity[symbol] = (
-                filled_qty
-            )
 
             buy_cost = (
                 actual_avg_price
@@ -315,6 +368,14 @@ class PaperBroker:
                     f"need {buy_cost:.2f}, have {self.capital:.2f}"
                 )
                 return
+
+            self.positions[symbol] = (
+                actual_avg_price
+            )
+
+            self.quantity[symbol] = (
+                filled_qty
+            )
 
             self.capital -= buy_cost
         else:
@@ -425,6 +486,16 @@ class PaperBroker:
             actual_exit_price = None
 
             for attempt in range(max_attempts):
+                position_qty = self.get_position_qty(symbol)
+
+                if position_qty is None:
+                    print("Could not verify position quantity")
+                    return
+
+                if position_qty <= 0:
+                    print("Position already closed")
+                    return
+
                 order_id = kite.place_order(
 
                     variety=kite.VARIETY_REGULAR,
@@ -436,7 +507,7 @@ class PaperBroker:
                     transaction_type=
                     kite.TRANSACTION_TYPE_SELL,
 
-                    quantity=qty,
+                    quantity=position_qty,
 
                     product=kite.PRODUCT_MIS,
 
@@ -457,10 +528,61 @@ class PaperBroker:
                 )
 
                 if order_info is None:
+                    current_qty = self.get_position_qty(symbol)
+
+                    if current_qty is None:
+                        print("Could not verify current position quantity")
+                        return
+
+                    if current_qty <= 0:
+                        sl_order_id = self.stop_loss_order_ids.get(symbol)
+
+                        if sl_order_id:
+                            try:
+                                kite.cancel_order(
+                                    variety=kite.VARIETY_REGULAR,
+                                    order_id=sl_order_id
+                                )
+                                self.stop_loss_order_ids.pop(symbol, None)
+                            except Exception as e:
+                                print(f"Could not cancel SL for {symbol}: {e}")
+
+                        try:
+                            order_history = kite.order_history(order_id)
+                        except Exception as e:
+                            print(f"Could not fetch order history: {e}")
+                            order_history = []
+
+                        complete_order = next(
+                            (
+                                o for o in reversed(order_history)
+                                if o.get("status") == "COMPLETE"
+                            ),
+                            None
+                        )
+
+                        if complete_order:
+                            actual_exit_price = float(
+                                complete_order.get("average_price") or 0
+                            )
+                        else:
+                            actual_exit_price = self._get_current_price(symbol)
+
+                        if actual_exit_price is None:
+                            print("Could not determine exit price")
+                            return
+                        qty = position_qty
+                        break
+
                     print(
                         f"⚠️ Sell order update timeout for {order_id}, fetching order history"
                     )
-                    order_history = kite.order_history(order_id)
+
+                    try:
+                        order_history = kite.order_history(order_id)
+                    except Exception as e:
+                        print(f"Could not fetch order history: {e}")
+                        order_history = []
                     latest = order_history[-1] if order_history else {}
                 else:
                     latest = order_info
@@ -469,6 +591,19 @@ class PaperBroker:
                 if status == "COMPLETE":
                     actual_exit_price = float(latest.get("average_price") or 0)
                     qty = int(latest.get("filled_quantity") or qty)
+                    sl_order_id = self.stop_loss_order_ids.get(symbol)
+
+                    if sl_order_id:
+                        try:
+                            kite.cancel_order(
+                                variety=kite.VARIETY_REGULAR,
+                                order_id=sl_order_id
+                            )
+                            self.stop_loss_order_ids.pop(symbol, None)
+                        except Exception as e:
+                            print(
+                                f"Could not cancel SL for {symbol}: {e}"
+                            )
                     break
                 elif status in ["REJECTED", "CANCELLED"]:
                     print(
