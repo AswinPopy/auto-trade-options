@@ -134,11 +134,11 @@ class PaperBroker:
     def get_position_qty(self, symbol):
         try:
             positions = kite.positions()
-
+            print(f"Positions : {positions}")
             for pos in positions["net"]:
                 if pos["tradingsymbol"] == symbol:
                     return int(pos["quantity"])
-
+            print("Kite position return 0")
             return 0
 
         except Exception as e:
