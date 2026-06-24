@@ -86,7 +86,7 @@ class ExitManager:
 
             target_level = (
                 entry_underlying
-                + (2.0 * atr)
+                + (2.5 * atr)
             )
 
             print(
@@ -126,7 +126,7 @@ class ExitManager:
 
             target_level = (
                 entry_underlying
-                - (2.0 * atr)
+                - (2.5 * atr)
             )
 
             print(
