@@ -300,8 +300,8 @@ class StrategyEngine:
         symbol
     ):
         details = {}
-        candles = self.reader.get_day_candles(
-            symbol
+        candles = self.reader.get_last(
+            symbol, 60
         )
         
         closes = [c["close"] for c in candles[-25:]]
@@ -464,8 +464,8 @@ class StrategyEngine:
             print(
                     f"🟢 {symbol} : Volume Breakout : CE"
                 )
-            
-            slope = calculate_daily_slope(candles)
+            slope_candles = self.reader.get_day_candles(symbol)
+            slope = calculate_daily_slope(slope_candles)
             details['daily_slope'] = slope
 
             if slope < 0:
@@ -577,7 +577,8 @@ class StrategyEngine:
                     f"🟡 {symbol} : Volume Breakout : PE"
                 )
             
-            slope = calculate_daily_slope(candles)
+            slope_candles = self.reader.get_day_candles(symbol)
+            slope = calculate_daily_slope(slope_candles)
             details['daily_slope'] = slope
 
             if slope > 0:
