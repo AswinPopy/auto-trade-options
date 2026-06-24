@@ -42,9 +42,9 @@ class RiskManager:
 
         lots = int(max_amount / lot_cost)
 
-        #return max(lots, 1) * lot_size
         print(f"returning lot size : {lot_size}")
-        return lot_size
+        return max(lots, 1) * lot_size
+        
     
     def get_lot_size(self, symbol):
         if not symbol:
