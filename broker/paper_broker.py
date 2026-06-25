@@ -441,6 +441,134 @@ class PaperBroker:
             f"AvgPrice={self.positions[symbol]}"
             )
 
+    def reconcile_closed_positions(self):
+        if not self.live_trading:
+            return
+
+        for symbol in list(self.positions.keys()):
+            position_qty = self.get_position_qty(symbol)
+            if position_qty is None:
+                continue
+
+            if position_qty <= 0:
+                details = self.trade_details.get(symbol, {}) if hasattr(self, "trade_details") else {}
+                entry = self.positions.get(symbol)
+                qty = self.quantity.get(symbol, 0)
+                price = details.get("exit_price") or details.get("price")
+
+                if price is None:
+                    price = self._get_current_price(symbol)
+
+                if entry is not None and price is not None:
+                    self._finalize_sell(
+                        symbol,
+                        details,
+                        entry,
+                        qty,
+                        price,
+                        order_id=None,
+                    )
+                else:
+                    self.positions.pop(symbol, None)
+                    self.quantity.pop(symbol, None)
+                    self.trade_details.pop(symbol, None)
+
+    def _finalize_sell(
+        self,
+        symbol,
+        details,
+        entry,
+        qty,
+        price,
+        order_id=None,
+    ):
+        if price is None:
+            price = details.get("exit_price") or details.get("price")
+
+        if price is None:
+            price = self._get_current_price(symbol)
+
+        if price is None:
+            print(f"❌ No exit price available for {symbol}")
+            return False
+
+        pnl = (price - entry) * qty
+        vwap = details.get("vwap")
+        atr_percent = details.get("atr_percent")
+        strength = details.get("candle_strength")
+        atr_ratio = details.get("atr_ratio")
+        volume_ratio = details.get("volume_ratio")
+        distance_from_vwap = details.get("distance_from_vwap")
+        proceeds = price * qty
+
+        if self.live_trading:
+            self.sync_capital()
+        else:
+            self.capital += proceeds
+
+        self.realized_pnl += pnl
+
+        print(
+            "SELL COMPLETE:",
+            symbol,
+            "price=",
+            price,
+            "pnl=",
+            pnl,
+            "capital_after=",
+            self.capital,
+        )
+
+        self.logger.log_event(
+            event="SELL",
+            symbol=symbol,
+            side="SELL",
+            price=price,
+            qty=qty,
+            capital=self.capital,
+            entry=entry,
+            entry_time=details.get("entry_time"),
+            exit_price=price,
+            pnl=pnl,
+            vwap=vwap,
+            atr=atr_percent,
+            strength=strength,
+            atr_ratio=atr_ratio,
+            volume_ratio=volume_ratio,
+            distance_from_vwap=distance_from_vwap,
+            daily_slope=details.get("daily_slope"),
+            details=str(details),
+            order_id=order_id,
+        )
+
+        self.logger.log_trade(
+            order_id,
+            symbol,
+            entry,
+            details.get("entry_time"),
+            price,
+            qty,
+            pnl,
+            self.capital,
+            vwap,
+            atr_percent,
+            strength,
+            atr_ratio,
+            volume_ratio,
+            distance_from_vwap,
+            details.get("daily_slope"),
+        )
+
+        self.positions.pop(symbol, None)
+        self.quantity.pop(symbol, None)
+
+        if hasattr(self, "trade_details") and isinstance(self.trade_details, dict):
+            self.trade_details.pop(symbol, None)
+
+        print(f"🔴 SOLD {symbol} @ {price}")
+        print(f"PnL = {pnl:.2f}")
+        return True
+
     # =========================
     # SELL
     # =========================
@@ -458,7 +586,7 @@ class PaperBroker:
 
         entry = self.positions[symbol]
 
-        qty = self.quantity[symbol]
+        qty = self.quantity.get(symbol, 0)
         print(
             "SELL START:",
             symbol,
@@ -494,6 +622,20 @@ class PaperBroker:
 
                 if position_qty <= 0:
                     print("Position already closed")
+                    price = details.get("exit_price") or details.get("price")
+                    if price is None:
+                        price = self._get_current_price(symbol)
+                    if price is None:
+                        print(f"Could not determine exit price for {symbol}")
+                        return
+                    self._finalize_sell(
+                        symbol,
+                        details,
+                        entry,
+                        qty,
+                        price,
+                        order_id=order_id,
+                    )
                     return
 
                 order_id = kite.place_order(
@@ -637,90 +779,13 @@ class PaperBroker:
                 )
                 return
 
-        # ==========================
-        # PnL
-        # ==========================
-        pnl = (
-            (price - entry)
-            * qty
-        )
-        vwap = details.get('vwap')
-        atr_percent = details.get('atr_percent')
-        strength = details.get('candle_strength')
-        atr_ratio = details.get('atr_ratio')
-        volume_ratio = details.get('volume_ratio')
-        distance_from_vwap = details.get('distance_from_vwap')
-        proceeds = (
-            price
-            * qty
-        )
-        if self.live_trading:
-            self.sync_capital()
-        else:
-            self.capital += proceeds
-        self.realized_pnl += pnl
-        print(
-            "SELL COMPLETE:",
+        self._finalize_sell(
             symbol,
-            "price=",
+            details,
+            entry,
+            qty,
             price,
-            "pnl=",
-            pnl,
-            "capital_after=",
-            self.capital
-        )
-        self.logger.log_event(
-            event="SELL",
-            symbol=symbol,
-            side="SELL",
-            price=price,
-            qty=qty,
-            capital=self.capital,
-            entry=entry,
-            entry_time=details.get("entry_time"),
-            exit_price=price,
-            pnl=pnl,
-            vwap=vwap,
-            atr=atr_percent,
-            strength=strength,
-            atr_ratio=atr_ratio,
-            volume_ratio=volume_ratio,
-            distance_from_vwap=distance_from_vwap,
-            daily_slope=details.get("daily_slope"),
-            details=str(details),
             order_id=order_id,
         )
-        print("About to log trade with details:", details)
-        self.logger.log_trade(
-            order_id,
-            symbol,
-            entry,
-            details.get("entry_time"),
-            price,
-            qty,
-            pnl,
-            self.capital,
-            vwap,
-            atr_percent,
-            strength,
-            atr_ratio,
-            volume_ratio,
-            distance_from_vwap,
-            details.get("daily_slope")
-        )
-
-        print(
-            f"🔴 SOLD "
-            f"{symbol} "
-            f"@ {price}"
-        )
-
-        print(
-            f"PnL = {pnl:.2f}"
-        )
-
-        del self.positions[symbol]
-
-        del self.quantity[symbol]
 
     

@@ -170,6 +170,8 @@ def execution_worker():
 def exit_worker():
 
     while True:
+        broker.reconcile_closed_positions()
+
         for position in list(
             broker.positions.keys()
         ):
