@@ -77,7 +77,6 @@ def wait_for_app_code():
 
 def run_playwright():
 
-    callback.request_token = None
     callback.start_callback_server()
 
     with sync_playwright() as p:
@@ -94,17 +93,17 @@ def run_playwright():
 
         page.click('button[type="submit"]')
 
-        page.wait_for_timeout(25000)
-
         app_code = wait_for_app_code()
 
         page.locator('input[type="number"]').fill(app_code)
         print("About to get req token")
-        while callback.request_token is None:
+        while state.request_token is None:
+            print("4")
             time.sleep(0.5)
-
-        request_token = callback.request_token
+        print("5")
+        request_token = state.request_token
         page.wait_for_timeout(5000)
+        print("6")
         browser.close()
     print("Reached here --")
     kite = KiteConnect(api_key=API_KEY)
@@ -115,7 +114,7 @@ def run_playwright():
     )
 
     access_token = data["access_token"]
-
+    print(f"Access token is now : {access_token}")
     update_env(KEY_NAME, access_token)
 
     send_message("✅ Token generated successfully")
@@ -145,9 +144,11 @@ def update_env(key, value, file_path=ENV_FILE):
                 else:
                     lines.append(line)
     except FileNotFoundError:
+        print("File not found aan")
         pass
 
     if not updated:
+        print("Not updated aan")
         lines.append(f"{key}={value}\n")
 
     with open(file_path, "w") as f:

@@ -5,7 +5,7 @@ class AppState:
     waiting_for_app_code = False
 
     app_code = None
-
+    request_token = None
 
 state = AppState()
 

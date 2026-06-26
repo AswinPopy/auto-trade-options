@@ -3,7 +3,7 @@ from urllib.parse import urlparse, parse_qs
 import threading
 
 request_token = None
-
+from state import state
 
 class CallbackHandler(BaseHTTPRequestHandler):
 
@@ -13,9 +13,9 @@ class CallbackHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
 
-        request_token = params.get("request_token", [None])[0]
+        state.request_token = params.get("request_token", [None])[0]
 
-        print(f"Received request token: {request_token}")
+        print(f"Received request token: {state.request_token}")
 
         self.send_response(200)
         self.end_headers()
