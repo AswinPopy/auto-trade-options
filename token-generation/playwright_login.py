@@ -20,6 +20,8 @@ from playwright.sync_api import sync_playwright
 load_dotenv()
 
 
+import callback
+
 def save_access_token(token):
 
     env_path = ".env"
@@ -75,6 +77,9 @@ def wait_for_app_code():
 
 def run_playwright():
 
+    callback.request_token = None
+    callback.start_callback_server()
+
     with sync_playwright() as p:
 
         browser = p.chromium.launch(headless=False)
@@ -95,7 +100,10 @@ def run_playwright():
 
         page.locator('input[type="number"]').fill(app_code)
         print("About to get req token")
-        request_token = get_request_token(page)
+        while callback.request_token is None:
+            time.sleep(0.5)
+
+        request_token = callback.request_token
         page.wait_for_timeout(5000)
         browser.close()
     print("Reached here --")

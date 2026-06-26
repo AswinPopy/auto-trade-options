@@ -4,7 +4,9 @@ import threading
 
 request_token = None
 
+
 class CallbackHandler(BaseHTTPRequestHandler):
+
     def do_GET(self):
         global request_token
 
@@ -13,10 +15,33 @@ class CallbackHandler(BaseHTTPRequestHandler):
 
         request_token = params.get("request_token", [None])[0]
 
+        print(f"Received request token: {request_token}")
+
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Login successful. You can close this window.")
+        self.wfile.write(
+            b"Login successful. You can close this window."
+        )
 
-server = HTTPServer(("localhost", 8000), CallbackHandler)
 
-threading.Thread(target=server.serve_forever, daemon=True).start()
+server = None
+
+
+def start_callback_server():
+
+    global server
+
+    if server is not None:
+        return
+
+    server = HTTPServer(
+        ("localhost", 8000),
+        CallbackHandler
+    )
+
+    threading.Thread(
+        target=server.serve_forever,
+        daemon=True
+    ).start()
+
+    print("Callback server started")
