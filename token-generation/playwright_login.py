@@ -116,9 +116,6 @@ def run_playwright():
 from urllib.parse import urlparse, parse_qs
 
 def get_request_token(page):
-    print("WAIT to get req token")
-    page.wait_for_url("**request_token=*", timeout=300000)
-    print("PAGE to get req token")
     parsed = urlparse(page.url)
     print(f"parsed :{parsed}")
     return parse_qs(parsed.query)["request_token"][0]
