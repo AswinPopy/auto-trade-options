@@ -17,7 +17,7 @@ with sync_playwright() as p:
     page.fill("#userid", "EKY281")
     page.fill("#password", "meAswin@7890")
 
-    page.wait_for_timeout(17000) 
+    page.wait_for_timeout(60000) 
 
 # ---------------------------------
 # INIT KITE

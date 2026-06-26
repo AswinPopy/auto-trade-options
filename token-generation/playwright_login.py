@@ -89,18 +89,16 @@ def run_playwright():
 
         page.click('button[type="submit"]')
 
-        page.wait_for_timeout(40000)
+        page.wait_for_timeout(25000)
 
         app_code = wait_for_app_code()
 
-        page.locator(".su-input-group").fill(app_code)
-
-        page.click('button[type="submit"]')
-
+        page.locator('input[type="number"]').fill(app_code)
+        print("About to get req token")
         request_token = get_request_token(page)
-
+        page.wait_for_timeout(5000)
         browser.close()
-
+    print("Reached here --")
     kite = KiteConnect(api_key=API_KEY)
 
     data = kite.generate_session(
@@ -118,9 +116,11 @@ def run_playwright():
 from urllib.parse import urlparse, parse_qs
 
 def get_request_token(page):
+    print("WAIT to get req token")
     page.wait_for_url("**request_token=*", timeout=300000)
-
+    print("PAGE to get req token")
     parsed = urlparse(page.url)
+    print(f"parsed :{parsed}")
     return parse_qs(parsed.query)["request_token"][0]
 
 

@@ -13,7 +13,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv(
     "TELEGRAM_BOT_TOKEN"
 )
-
+print(f"Token is : {BOT_TOKEN}")
 ALLOWED_CHAT_ID = int(
     os.getenv(
         "TELEGRAM_CHAT_ID"
@@ -79,18 +79,24 @@ while True:
     try:
 
         params = {}
-
+        print("KDJFKA")
         if offset:
+            print("IOOFSD")
             params["offset"] = offset
-
-        resp = requests.get(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
-            params=params,
-            timeout=30,
-        ).json()
+        try:
+            print("DFSADF")
+            resp = requests.get(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+                params=params,
+                timeout=30,
+            ).json()
+            print(resp)
+        except Exception as e:
+            print("XXDFS")
+            print(e)
 
         for update in resp["result"]:
-
+            print("Heu")
             offset = (
                 update["update_id"]
                 + 1
@@ -121,7 +127,7 @@ while True:
             process_message(text)
 
     except Exception as e:
-
+        print("Hiii")
         print(e)
 
     time.sleep(2)
