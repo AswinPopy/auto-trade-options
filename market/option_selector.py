@@ -30,10 +30,10 @@ def get_expiry_symbol_month(
     expiry_year = reference_date.year
     expiry_month = reference_date.month
 
-    if reference_date.day > 25:
-        expiry_month = expiry_month % 12 + 1
-        if expiry_month == 1:
-            expiry_year += 1
+    # if reference_date.day > 25:
+    #     expiry_month = expiry_month % 12 + 1
+    #     if expiry_month == 1:
+    #         expiry_year += 1
 
     expiry_date = get_monthly_nse_expiry(
         expiry_year,

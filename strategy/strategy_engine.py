@@ -468,11 +468,11 @@ class StrategyEngine:
             slope = calculate_daily_slope(slope_candles)
             details['daily_slope'] = slope
 
-            if slope < 0:
-                print(
-                    f"⛔ {symbol} : BUY CE rejected by slope filter (slope={slope:.2f})"
-                )
-                return None, details
+            # if slope < 0:
+            #     print(
+            #         f"⛔ {symbol} : BUY CE rejected by slope filter (slope={slope:.2f})"
+            #     )
+            #     return None, details
 
             print(
                 f"🟢 {symbol} : BUY CE SIGNAL"
@@ -581,11 +581,11 @@ class StrategyEngine:
             slope = calculate_daily_slope(slope_candles)
             details['daily_slope'] = slope
 
-            if slope > 0:
-                print(
-                    f"⛔ {symbol} : BUY PE rejected by slope filter (slope={slope:.2f})"
-                )
-                return None, details
+            # if slope > 0:
+            #     print(
+            #         f"⛔ {symbol} : BUY PE rejected by slope filter (slope={slope:.2f})"
+            #     )
+            #     return None, details
 
             print(
                 f"🟡 {symbol} BUY PE SIGNAL"
