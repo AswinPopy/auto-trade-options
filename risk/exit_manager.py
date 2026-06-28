@@ -47,7 +47,7 @@ class ExitManager:
 
         if entry_underlying is None:
             print(f"Missing details for {position}, cannot perform exit check")
-            return False
+            return False, 0
 
         candles = self.candle_engine.get_last(
             underlying,
@@ -56,7 +56,7 @@ class ExitManager:
 
         if len(candles) < 25:
             print(f"Not enough candles to calculate ATR for {underlying}")
-            return False
+            return False, 0
 
         closes = [
             c["close"]
@@ -71,12 +71,12 @@ class ExitManager:
 
         if atr is None:
             print(f"Could not calculate ATR for {underlying}")
-            return False
+            return False, 0
 
         # ==================================
         # CALL OPTION
         # ==================================
-        print("ATR Exit Check: {atr} | Current Underlying={current} | Entry Underlying={entry}")
+        print(f"ATR Exit Check: {atr} | Current Underlying={current_underlying} | Entry Underlying={entry_underlying}")
         if "CE" in position:
 
             stop_level = (
@@ -103,7 +103,7 @@ class ExitManager:
                     "🔴 CE ATR STOPLOSS HIT"
                 )
 
-                return True
+                return True, atr
 
             if current_underlying >= target_level:
 
@@ -111,7 +111,7 @@ class ExitManager:
                     "🟢 CE ATR TARGET HIT"
                 )
 
-                return True
+                return True, atr
 
         # ==================================
         # PUT OPTION
@@ -143,7 +143,7 @@ class ExitManager:
                     "🔴 PE ATR STOPLOSS HIT"
                 )
 
-                return True
+                return True, atr
 
             if current_underlying <= target_level:
 
@@ -151,9 +151,9 @@ class ExitManager:
                     "🟢 PE ATR TARGET HIT"
                 )
 
-                return True
+                return True, atr
 
-        return False
+        return False, 0
 
     def calculate_atr(
     self,

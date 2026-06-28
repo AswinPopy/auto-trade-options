@@ -593,7 +593,7 @@ class PaperBroker:
 
         pnl = (price - entry) * qty
         vwap = details.get("vwap")
-        atr_percent = details.get("atr_percent")
+        atr_percent = details.get("atr")
         strength = details.get("candle_strength")
         atr_ratio = details.get("atr_ratio")
         volume_ratio = details.get("volume_ratio")
@@ -697,6 +697,8 @@ class PaperBroker:
             self.capital,
             "entry_time=",
             details.get("entry_time"),
+            "atr=",
+            details.get("atr"),
             "trade_details=",
             details
         )
