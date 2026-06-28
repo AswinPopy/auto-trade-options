@@ -184,12 +184,12 @@ def exit_worker():
                 print(f"Current price for {position} is None, skipping exit check")
                 continue
 
-            should_exit = (
+            should_exit, atr = (
                 exit_manager.should_exit(
                     position
                 )
             )
-
+            details['atr'] = atr
 
             if should_exit:
                 print(f"EXITING {position} at price {current}")
