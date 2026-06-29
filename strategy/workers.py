@@ -9,10 +9,9 @@ from data.shared import (
 live_prices,
 strategy,
 broker,
-risk_manager,
-qty_manager,
 exit_manager
 )
+from broker.kite_session import kite
 
 from config import MAX_CONCURRENT_TRADES
 
@@ -39,6 +38,36 @@ def monitor():
         )
 
         time.sleep(10)
+
+def liquid_option(symbol):
+        quote = kite.quote(f"NFO:{symbol}")
+        q = quote[f"NFO:{symbol}"]
+
+        bid = q["depth"]["buy"][0]["price"]
+        ask = q["depth"]["sell"][0]["price"]
+
+        
+        spread_pct = (ask - bid) / ((ask + bid) / 2)
+
+        if ask > 10:
+            if spread_pct > 0.03:
+                print("SPREAD PERCENTAGE > 3 -- SKIP ")
+                return False
+        else:
+            if ask - bid > 0.15:
+                print("SPREAD  > 0.15 -- SKIP ")
+                return False
+
+        if q["oi"] < 2000:
+            print("TOTAL OI < 2000 ---")
+            return False
+
+        if q["volume"] < 1000:
+            print("TOTAL TRADED VOLUME < 1000 ---")
+            return False
+        
+        return True
+
 
 def strategy_worker():
     while True:
@@ -90,6 +119,10 @@ def strategy_worker():
                 print("ELSE CONTINUE")
                 continue
             print(f"OPTION SYM : {option_symbol}")
+            
+            if not liquid_option(symbol=option_symbol):
+                print("NOT ENOUGH LIQUIDITY ---")
+                continue
 
             if broker.live_trading:
                 broker.sync_capital()
