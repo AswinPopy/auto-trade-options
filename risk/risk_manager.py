@@ -1,3 +1,4 @@
+from config import CAPITAL_MULTIPLIER
 class RiskManager:
 
     def __init__(self, lot_size_map=None):
@@ -27,7 +28,7 @@ class RiskManager:
 
         lot_size = self.get_lot_size(symbol)
 
-        max_amount = capital * 0.5
+        max_amount = capital * CAPITAL_MULTIPLIER
         lot_cost = option_price * lot_size
         print(f"lot size here -- {lot_size}")
         print(f"option price here -- {option_price}")
