@@ -187,7 +187,23 @@ class PaperBroker:
         if entry_price <= 0:
             return None
 
-        return round(entry_price * .80, 2)
+        return round(entry_price * .90, 2)
+
+    def _get_stop_loss_limit_price(self, trigger_price):
+        if trigger_price <= 10:
+            buffer = 0.10
+        elif trigger_price <= 100:
+            buffer = 0.50
+        elif trigger_price <= 1000:
+            buffer = 1.00
+        else:
+            buffer = 2.00
+
+        return round(max(trigger_price - buffer, 0.05), 2)
+
+    def round_to_tick(self, price, tick=0.05):
+        return round(round(price / tick) * tick, 2)
+
 
     def _place_stop_loss_order(self, symbol, qty, entry_price):
         if not self.live_trading:
@@ -197,6 +213,16 @@ class PaperBroker:
         if stop_loss_price is None:
             return None
 
+        limit_price = self._get_stop_loss_limit_price(stop_loss_price)
+
+        # ensure SL rule validity
+        if limit_price >= stop_loss_price:
+            limit_price = stop_loss_price - 0.05
+
+        # tick alignment
+        stop_loss_price = self.round_to_tick(stop_loss_price)
+        limit_price = self.round_to_tick(limit_price)
+
         try:
             order_id = kite.place_order(
                 variety=kite.VARIETY_REGULAR,
@@ -205,12 +231,15 @@ class PaperBroker:
                 transaction_type=kite.TRANSACTION_TYPE_SELL,
                 quantity=qty,
                 product=kite.PRODUCT_MIS,
-                order_type=kite.ORDER_TYPE_SLM,
+                order_type=kite.ORDER_TYPE_SL,
                 trigger_price=stop_loss_price,
+                price=limit_price
             )
+
             self.stop_loss_order_ids[symbol] = order_id
-            print(f"🛑 Stop-loss order placed for {symbol} at {stop_loss_price}")
+            print(f"🛑 Stop-loss placed for {symbol} at {stop_loss_price}")
             return order_id
+
         except Exception as e:
             print(f"Failed to place stop-loss order for {symbol}: {e}")
             return None
@@ -290,10 +319,7 @@ class PaperBroker:
                 product=kite.PRODUCT_MIS,
 
                 order_type=
-                kite.ORDER_TYPE_MARKET,
-
-                market_protection=-1
-            )
+                kite.ORDER_TYPE_MARKET            )
 
             print(
                 f"LIVE BUY ORDER : "
@@ -303,7 +329,7 @@ class PaperBroker:
             order_info = self._wait_for_order_update(
                         order_id,
                         symbol=symbol,
-                        timeout=15,
+                        timeout=45,
                         )
 
             latest = order_info
@@ -760,9 +786,8 @@ class PaperBroker:
                     product=kite.PRODUCT_MIS,
 
                     order_type=
-                    kite.ORDER_TYPE_MARKET,
-                    market_protection=-1
-                )
+                    kite.ORDER_TYPE_MARKET
+                        )
 
                 print(
                     f"LIVE SELL ORDER : "

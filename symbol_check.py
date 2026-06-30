@@ -1,6 +1,6 @@
 from broker.kite_session import kite
 
-symbol = "ICICIBANK26JUL1390PE"
+symbol = "DIVISLAB26JUL6550CE"
 quote = kite.quote(f"NFO:{symbol}")
 quote_data = quote.get(f"NFO:{symbol}", {})
 depth = quote_data.get("depth")
