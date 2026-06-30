@@ -222,7 +222,6 @@ def exit_worker():
                     position
                 )
             )
-            details['atr'] = atr
 
             if should_exit:
                 print(f"EXITING {position} at price {current}")
@@ -230,6 +229,7 @@ def exit_worker():
                     position,
                     {}
                 )
+                details['atr'] = atr
                 broker.sell(
                     position,
                     details
