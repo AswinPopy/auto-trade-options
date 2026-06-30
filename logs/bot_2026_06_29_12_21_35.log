@@ -1,0 +1,7 @@
+Fetch capital now : 39945.6
+Traceback (most recent call last):
+  File "C:\Users\aswin\Desktop\auto-trade-options\main.py", line 29, in <module>
+    from strategy.workers import (
+  File "C:\Users\aswin\Desktop\auto-trade-options\strategy\workers.py", line 8, in <module>
+    from data.shared import (
+ImportError: cannot import name 'qty_manager' from 'data.shared' (C:\Users\aswin\Desktop\auto-trade-options\data\shared.py)

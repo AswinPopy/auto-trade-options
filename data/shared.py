@@ -16,11 +16,6 @@ from risk.risk_manager import (
     RiskManager
 )
 
-from broker.quantity_manager import(
-    QuantityManager
-)
-
-qty_manager = QuantityManager()
 
 risk_manager = RiskManager(
 )

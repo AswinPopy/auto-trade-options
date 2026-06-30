@@ -9,8 +9,6 @@ from data.shared import (
 live_prices,
 strategy,
 broker,
-risk_manager,
-qty_manager,
 exit_manager
 )
 
@@ -189,7 +187,6 @@ def exit_worker():
                     position
                 )
             )
-            details['atr'] = atr
 
             if should_exit:
                 print(f"EXITING {position} at price {current}")
@@ -197,6 +194,7 @@ def exit_worker():
                     position,
                     {}
                 )
+                details['atr'] = atr
                 broker.sell(
                     position,
                     details

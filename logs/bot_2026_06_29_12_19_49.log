@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\aswin\Desktop\auto-trade-options\main.py", line 29, in <module>
+    from strategy.workers import (
+  File "C:\Users\aswin\Desktop\auto-trade-options\strategy\workers.py", line 8, in <module>
+    from data.shared import (
+  File "C:\Users\aswin\Desktop\auto-trade-options\data\shared.py", line 19, in <module>
+    from broker.quantity_manager import(
+ModuleNotFoundError: No module named 'broker.quantity_manager'

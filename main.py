@@ -87,15 +87,13 @@ for i in nse_instruments:
 
     token = i["instrument_token"]
 
-    symbol = i["tradingsymbol"]
-
+    symbol =str( i["tradingsymbol"])
     if symbol not in UNDERLYING:
         continue
     
     token_to_symbol[token] = symbol
 
     symbol_to_token[symbol] = token
-
 
 # =========================
 # NFO OPTIONS
@@ -108,8 +106,7 @@ nfo_instruments = kite.instruments(
 for i in nfo_instruments:
 
     token = i["instrument_token"]
-
-    symbol = i["tradingsymbol"]
+    symbol = str(i["tradingsymbol"])
     if not any(
 
         symbol.startswith(stock)
